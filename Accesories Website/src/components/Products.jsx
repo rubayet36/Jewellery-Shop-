@@ -44,10 +44,11 @@ function Products() {
     );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h2 className="text-3xl font-extrabold text-brand-brown text-center mb-10">
-        Our Products
-      </h2>
+    <div className="w-full bg-brand-beige py-12 rounded-b-2xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl font-extrabold text-brand-brown text-center mb-10">
+          Our Products
+        </h2>
       {products.length === 0 ? (
         <p className="text-center text-gray-500">No products available.</p>
       ) : (
@@ -78,7 +79,7 @@ function Products() {
                   <span className="text-xl font-bold text-gray-900">
                     ${product.price}
                   </span>
-                  <button className="bg-brand-brown text-white px-4 py-2 rounded-md hover:bg-brand-beige transition-colors duration-200">
+                  <button className="bg-[#752700] text-white px-4 py-2 rounded-md hover:bg-[#f3e0d0] hover:text-[#752700] transition-colors duration-200 shadow-sm">
                     Add to Cart
                   </button>
                 </div>
@@ -87,6 +88,7 @@ function Products() {
           ))}
         </div>
       )}
+    </div>
     </div>
   );
 }

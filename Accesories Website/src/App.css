@@ -1,7 +1,23 @@
 @import "tailwindcss";
 
-@theme {
+:root {
   --color-brand-brown: #752700;
-  --color-brand-beige: #F3E0D0;
-  --color-brand-rust: #A44F31;
+  --color-brand-beige: #f3e0d0;
+  --color-brand-rust: #a44f31;
+}
+
+.text-brand-brown {
+  color: var(--color-brand-brown);
+}
+
+.bg-brand-brown {
+  background-color: var(--color-brand-brown);
+}
+
+.bg-brand-beige {
+  background-color: var(--color-brand-beige);
+}
+
+.text-brand-rust {
+  color: var(--color-brand-rust);
 }

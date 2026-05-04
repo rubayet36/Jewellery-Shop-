@@ -5,7 +5,7 @@ import AddProduct from "./pages/Admin/AddProduct";
 
 function App() {
   return (
-    <div className="bg-brand-beige min-h-screen">
+    <div className="bg-black min-h-screen">
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/admin/add-product" element={<AddProduct />} />

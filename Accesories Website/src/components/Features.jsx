@@ -2,7 +2,7 @@ import CategoryBox from "./Categorybox";
 
 function Features({ categories }) {
   return (
-    <section id="features" className="py-16 bg-white">
+    <section id="features" className="py-16 bg-white rounded-t-2xl ">
       <h2 className="text-3xl font-serif text-center mb-12 uppercase tracking-widest text-brand-brown">
         Shop By Category
       </h2>
