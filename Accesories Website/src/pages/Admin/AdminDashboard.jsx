@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import OverviewTab      from "./OverviewTab";
 import ProductsTab      from "./ProductsTab";
 import TransactionsTab  from "./TransactionsTab";
+import AnalyticsTab     from "./AnalyticsTab";
 
 // ── AdminDashboard ────────────────────────────────────────────────────────────
 // Sidebar shell that switches between the three admin tabs.
@@ -22,6 +23,7 @@ function AdminDashboard() {
 
   const tabs = [
     { id: "overview",      label: "📊 Overview" },
+    { id: "analytics",     label: "📈 Analytics" },
     { id: "products",      label: "💎 Products" },
     { id: "transactions",  label: "📦 Transactions" },
   ];
@@ -58,6 +60,7 @@ function AdminDashboard() {
       {/* ── Main content ── */}
       <main style={{ flex: 1, padding: "32px 40px", overflowY: "auto", display: "flex", flexDirection: "column" }}>
         {activeTab === "overview"     && <OverviewTab />}
+        {activeTab === "analytics"    && <AnalyticsTab />}
         {activeTab === "products"     && <ProductsTab />}
         {activeTab === "transactions" && <TransactionsTab />}
       </main>

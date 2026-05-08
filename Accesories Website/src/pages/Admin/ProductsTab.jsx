@@ -10,7 +10,7 @@ export default function ProductsTab() {
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
-  const initForm = { name: "", category_id: "", price: "", description: "", image_url: "", design: "", stock: 0, colors: "", is_sale: false, sale_price: "" };
+  const initForm = { name: "", category_id: "", price: "", buying_price: "", description: "", image_url: "", design: "", stock: 0, colors: "", is_sale: false, sale_price: "" };
   const [form, setForm] = useState(initForm);
 
   useEffect(() => {
@@ -37,6 +37,7 @@ export default function ProductsTab() {
 
     const payload = {
       name: form.name, category_id: form.category_id, price: Number(form.price),
+      buying_price: form.buying_price ? Number(form.buying_price) : null,
       description: form.description, image_url: form.image_url, design: form.design,
       stock: Number(form.stock), colors: colorsArray,
       is_sale: form.is_sale, sale_price: form.sale_price ? Number(form.sale_price) : null,
@@ -57,6 +58,7 @@ export default function ProductsTab() {
     setEditingId(p.id);
     setForm({
       name: p.name, category_id: p.category_id, price: p.price,
+      buying_price: p.buying_price || "",
       description: p.description || "", image_url: p.image_url || "",
       design: p.design || "", stock: p.stock || 0,
       colors: Array.isArray(p.colors) ? p.colors.join(", ") : "",
@@ -88,9 +90,28 @@ export default function ProductsTab() {
 
           <div style={{ display: "flex", gap: "10px" }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: "11px", fontWeight: "700", color: BROWN, letterSpacing: "0.5px", display: "block", marginBottom: "5px" }}>PRICE (৳)</label>
-              <input type="number" placeholder="0.00" required value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} style={inputStyle} />
+              <label style={{ fontSize: "11px", fontWeight: "700", color: "#e74c3c", letterSpacing: "0.5px", display: "block", marginBottom: "5px" }}>BUYING PRICE (৳)</label>
+              <input type="number" placeholder="Cost price" value={form.buying_price} onChange={e => setForm({ ...form, buying_price: e.target.value })} style={{ ...inputStyle, borderColor: "#f5c6c6" }} />
             </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: "11px", fontWeight: "700", color: "#27ae60", letterSpacing: "0.5px", display: "block", marginBottom: "5px" }}>SELLING PRICE (৳)</label>
+              <input type="number" placeholder="0.00" required value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} style={{ ...inputStyle, borderColor: "#b2dfdb" }} />
+            </div>
+          </div>
+          {form.buying_price && form.price && (
+            <div style={{ padding: "10px 12px", background: "#f0fff4", borderRadius: "8px", border: "1px solid #c3f0d0", fontSize: "13px" }}>
+              <span style={{ color: "#888" }}>Profit per unit: </span>
+              <strong style={{ color: Number(form.price) - Number(form.buying_price) >= 0 ? "#27ae60" : "#e74c3c" }}>
+                ৳{(Number(form.price) - Number(form.buying_price)).toFixed(2)}
+              </strong>
+              {Number(form.buying_price) > 0 && (
+                <span style={{ color: "#aaa", marginLeft: "8px" }}>
+                  ({(((Number(form.price) - Number(form.buying_price)) / Number(form.buying_price)) * 100).toFixed(1)}% margin)
+                </span>
+              )}
+            </div>
+          )}
+          <div style={{ display: "flex", gap: "10px" }}>
             <div style={{ flex: 1 }}>
               <label style={{ fontSize: "11px", fontWeight: "700", color: BROWN, letterSpacing: "0.5px", display: "block", marginBottom: "5px" }}>STOCK QTY</label>
               <input type="number" min="0" placeholder="0" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} style={{ ...inputStyle, borderColor: Number(form.stock) === 0 ? "#e74c3c" : "#ddd" }} />
@@ -132,42 +153,53 @@ export default function ProductsTab() {
           <thead>
             <tr style={{ background: "#fafafa", borderBottom: "1px solid #eaeaea" }}>
               <th style={thStyle}>Product</th>
-              <th style={thStyle}>Price</th>
+              <th style={thStyle}>Buy</th>
+              <th style={thStyle}>Sell</th>
+              <th style={thStyle}>Profit</th>
               <th style={thStyle}>Stock</th>
               <th style={thStyle}>Status</th>
               <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {products.map(p => (
-              <tr key={p.id} style={{ borderBottom: "1px solid #eaeaea" }}>
-                <td style={tdStyle}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    {p.image_url
-                      ? <img src={p.image_url} alt="" style={{ width: "40px", height: "40px", borderRadius: "6px", objectFit: "cover" }} />
-                      : <div style={{ width: "40px", height: "40px", background: "#eee", borderRadius: "6px" }} />}
-                    <div>
-                      <p style={{ margin: 0, fontWeight: "600", color: "#333" }}>{p.name}</p>
-                      <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#888" }}>{p.categories?.name}</p>
+            {products.map(p => {
+              const profit = p.buying_price ? Number(p.price) - Number(p.buying_price) : null;
+              return (
+                <tr key={p.id} style={{ borderBottom: "1px solid #eaeaea" }}>
+                  <td style={tdStyle}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      {p.image_url
+                        ? <img src={p.image_url} alt="" style={{ width: "40px", height: "40px", borderRadius: "6px", objectFit: "cover" }} />
+                        : <div style={{ width: "40px", height: "40px", background: "#eee", borderRadius: "6px" }} />}
+                      <div>
+                        <p style={{ margin: 0, fontWeight: "600", color: "#333" }}>{p.name}</p>
+                        <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#888" }}>{p.categories?.name}</p>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td style={tdStyle}>৳{p.price}</td>
-                <td style={tdStyle}>
-                  <span style={{ color: p.stock <= 5 ? "#e74c3c" : "#333", fontWeight: p.stock <= 5 ? "700" : "400" }}>{p.stock}</span>
-                </td>
-                <td style={tdStyle}>
-                  {p.is_sale
-                    ? <span style={{ background: "#ffe8e8", color: "#e74c3c", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "700" }}>SALE</span>
-                    : <span style={{ color: "#999", fontSize: "12px" }}>Normal</span>}
-                </td>
-                <td style={{ ...tdStyle, textAlign: "right" }}>
-                  <button onClick={() => handleEdit(p)} style={{ background: "none", border: "none", color: "#3498db", cursor: "pointer", marginRight: "12px", fontWeight: "600" }}>Edit</button>
-                  <button onClick={() => handleDelete(p.id)} style={{ background: "none", border: "none", color: "#e74c3c", cursor: "pointer", fontWeight: "600" }}>Delete</button>
-                </td>
-              </tr>
-            ))}
-            {products.length === 0 && <tr><td colSpan="5" style={{ padding: "32px", textAlign: "center", color: "#999" }}>No products found</td></tr>}
+                  </td>
+                  <td style={{ ...tdStyle, color: "#e74c3c", fontWeight: "600" }}>{p.buying_price ? `৳${p.buying_price}` : <span style={{ color: "#ccc" }}>—</span>}</td>
+                  <td style={{ ...tdStyle, fontWeight: "600" }}>৳{p.price}</td>
+                  <td style={tdStyle}>
+                    {profit !== null
+                      ? <span style={{ color: profit >= 0 ? "#27ae60" : "#e74c3c", fontWeight: "700" }}>৳{profit.toFixed(0)}</span>
+                      : <span style={{ color: "#ccc" }}>—</span>}
+                  </td>
+                  <td style={tdStyle}>
+                    <span style={{ color: p.stock <= 5 ? "#e74c3c" : "#333", fontWeight: p.stock <= 5 ? "700" : "400" }}>{p.stock}</span>
+                  </td>
+                  <td style={tdStyle}>
+                    {p.is_sale
+                      ? <span style={{ background: "#ffe8e8", color: "#e74c3c", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "700" }}>SALE</span>
+                      : <span style={{ color: "#999", fontSize: "12px" }}>Normal</span>}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: "right" }}>
+                    <button onClick={() => handleEdit(p)} style={{ background: "none", border: "none", color: "#3498db", cursor: "pointer", marginRight: "12px", fontWeight: "600" }}>Edit</button>
+                    <button onClick={() => handleDelete(p.id)} style={{ background: "none", border: "none", color: "#e74c3c", cursor: "pointer", fontWeight: "600" }}>Delete</button>
+                  </td>
+                </tr>
+              );
+            })}
+            {products.length === 0 && <tr><td colSpan="7" style={{ padding: "32px", textAlign: "center", color: "#999" }}>No products found</td></tr>}
           </tbody>
         </table>
       </div>

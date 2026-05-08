@@ -24,6 +24,12 @@ export default function TransactionsTab() {
     setOrders(orders.map(o => o.id === id ? { ...o, status } : o));
   };
 
+  const deleteOrder = async (id) => {
+    if (!window.confirm("Delete this order permanently? This cannot be undone.")) return;
+    await supabase.from("orders").delete().eq("id", id);
+    setOrders(prev => prev.filter(o => o.id !== id));
+  };
+
   const pending   = orders.filter(o => o.status !== "delivered");
   const delivered = orders.filter(o => o.status === "delivered");
   const list      = view === "pending" ? pending : delivered;
@@ -66,16 +72,25 @@ export default function TransactionsTab() {
           <td style={{ ...tdStyle, fontWeight: "800", color: BROWN }}>৳{o.total}</td>
           <td style={{ ...tdStyle, fontSize: "12px", color: "#888" }}>{new Date(o.created_at).toLocaleDateString()}</td>
           <td style={{ ...tdStyle, textAlign: "right" }}>
-            {o.status !== "delivered" ? (
+            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", alignItems: "center" }}>
+              {o.status !== "delivered" ? (
+                <button
+                  onClick={(e) => { e.stopPropagation(); updateStatus(o.id, "delivered"); }}
+                  style={{ background: "#27ae60", color: "#fff", border: "none", padding: "7px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}
+                >
+                  ✓ Delivered
+                </button>
+              ) : (
+                <span style={{ background: "#e8f8f5", color: "#27ae60", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "700" }}>Delivered</span>
+              )}
               <button
-                onClick={(e) => { e.stopPropagation(); updateStatus(o.id, "delivered"); }}
-                style={{ background: "#27ae60", color: "#fff", border: "none", padding: "7px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}
+                onClick={(e) => { e.stopPropagation(); deleteOrder(o.id); }}
+                style={{ background: "#fff0f0", color: "#e74c3c", border: "1px solid #fbc4c4", padding: "7px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}
+                title="Delete this order"
               >
-                ✓ Delivered
+                🗑 Delete
               </button>
-            ) : (
-              <span style={{ background: "#e8f8f5", color: "#27ae60", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "700" }}>Delivered</span>
-            )}
+            </div>
           </td>
         </tr>
 
