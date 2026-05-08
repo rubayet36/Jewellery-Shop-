@@ -5,31 +5,53 @@ import { BROWN, RUST } from "./adminConstants";
 // ── Overview Tab ─────────────────────────────────────────────────────────────
 // Shows key stats and a one-time "Sync Stock from All Orders" utility.
 export default function OverviewTab() {
-  const [stats, setStats] = useState({ products: 0, lowStock: 0, orders: 0, revenue: 0 });
+  const [stats, setStats] = useState({
+    products: 0,
+    lowStock: 0,
+    orders: 0,
+    revenue: 0,
+  });
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
 
-  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   async function fetchStats() {
-    const { count: prodCount } = await supabase.from("products").select("*", { count: "exact", head: true });
-    const { data: lowStockData } = await supabase.from("products").select("id").lte("stock", 5);
-    let ordCount = 0, rev = 0;
+    const { count: prodCount } = await supabase
+      .from("products")
+      .select("*", { count: "exact", head: true });
+    const { data: lowStockData } = await supabase
+      .from("products")
+      .select("id")
+      .lte("stock", 5);
+    let ordCount = 0,
+      rev = 0;
     try {
       const { data: orders } = await supabase.from("orders").select("total");
       if (orders) {
         ordCount = orders.length;
         rev = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
       }
-    } catch (e) { console.log("Orders table might not exist yet."); }
-    setStats({ products: prodCount || 0, lowStock: lowStockData?.length || 0, orders: ordCount, revenue: rev });
+    } catch (e) {
+      console.log("Orders table might not exist yet.");
+    }
+    setStats({
+      products: prodCount || 0,
+      lowStock: lowStockData?.length || 0,
+      orders: ordCount,
+      revenue: rev,
+    });
   }
 
   async function syncStockFromOrders() {
     setSyncing(true);
     setSyncResult(null);
     try {
-      const { data: orders, error: oErr } = await supabase.from("orders").select("items");
+      const { data: orders, error: oErr } = await supabase
+        .from("orders")
+        .select("items");
       if (oErr) throw oErr;
 
       const soldMap = {};
@@ -47,7 +69,9 @@ export default function OverviewTab() {
       }
 
       const { data: products, error: pErr } = await supabase
-        .from("products").select("id, name, stock").in("id", productIds);
+        .from("products")
+        .select("id, name, stock")
+        .in("id", productIds);
       if (pErr) throw pErr;
 
       const log = [];
@@ -57,13 +81,18 @@ export default function OverviewTab() {
           const sold = soldMap[prod.id] || 0;
           const newStock = Math.max(0, (prod.stock || 0) - sold);
           if (newStock !== prod.stock) {
-            await supabase.from("products").update({ stock: newStock }).eq("id", prod.id);
-            log.push(`✅ ${prod.name}: ${prod.stock} → ${newStock} (sold ${sold})`);
+            await supabase
+              .from("products")
+              .update({ stock: newStock })
+              .eq("id", prod.id);
+            log.push(
+              `✅ ${prod.name}: ${prod.stock} → ${newStock} (sold ${sold})`,
+            );
             updated++;
           } else {
             log.push(`— ${prod.name}: stock unchanged at ${prod.stock}`);
           }
-        })
+        }),
       );
       setSyncResult({ updated, log });
       fetchStats();
@@ -75,45 +104,149 @@ export default function OverviewTab() {
   }
 
   const Card = ({ title, value, color }) => (
-    <div style={{ background: "#fff", padding: "24px", borderRadius: "16px", border: "1px solid #eaeaea", flex: 1, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
-      <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#666", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>{title}</p>
-      <p style={{ margin: 0, fontSize: "32px", fontWeight: "800", color }}>{value}</p>
+    <div
+      style={{
+        background: "#fff",
+        padding: "24px",
+        borderRadius: "16px",
+        border: "1px solid #eaeaea",
+        flex: 1,
+        boxShadow: "0 2px 10px rgba(0,0,0,0.02)",
+      }}
+    >
+      <p
+        style={{
+          margin: "0 0 8px",
+          fontSize: "13px",
+          color: "#666",
+          fontWeight: "600",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+        }}
+      >
+        {title}
+      </p>
+      <p style={{ margin: 0, fontSize: "32px", fontWeight: "800", color }}>
+        {value}
+      </p>
     </div>
   );
 
   return (
     <div>
-      <h1 style={{ margin: "0 0 24px", fontSize: "24px", color: BROWN, fontWeight: "800" }}>Dashboard Overview</h1>
+      <h1
+        style={{
+          margin: "0 0 24px",
+          fontSize: "24px",
+          color: BROWN,
+          fontWeight: "800",
+        }}
+      >
+        Dashboard Overview
+      </h1>
       <div style={{ display: "flex", gap: "20px", marginBottom: "32px" }}>
         <Card title="Total Products" value={stats.products} color={BROWN} />
-        <Card title="Low Stock Alerts" value={stats.lowStock} color={stats.lowStock > 0 ? "#e74c3c" : "#27ae60"} />
+        <Card
+          title="Low Stock Alerts"
+          value={stats.lowStock}
+          color={stats.lowStock > 0 ? "#e74c3c" : "#27ae60"}
+        />
         <Card title="Total Orders" value={stats.orders} color={RUST} />
-        <Card title="Revenue" value={`৳${stats.revenue.toFixed(0)}`} color="#27ae60" />
+        <Card
+          title="Revenue"
+          value={`৳${stats.revenue.toFixed(0)}`}
+          color="#27ae60"
+        />
       </div>
 
-      <div style={{ background: "#fff", border: "1px solid #eaeaea", borderRadius: "16px", padding: "24px" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+      <div
+        style={{
+          background: "#fff",
+          border: "1px solid #eaeaea",
+          borderRadius: "16px",
+          padding: "24px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: "16px",
+            flexWrap: "wrap",
+          }}
+        >
           <div>
-            <p style={{ margin: "0 0 4px", fontWeight: "700", color: BROWN, fontSize: "15px" }}>🔄 Sync Stock from All Orders</p>
+            <p
+              style={{
+                margin: "0 0 4px",
+                fontWeight: "700",
+                color: BROWN,
+                fontSize: "15px",
+              }}
+            >
+              🔄 Sync Stock from All Orders
+            </p>
             <p style={{ margin: 0, fontSize: "13px", color: "#888" }}>
-              Scans every past order and subtracts sold quantities from current product stock. Run this once to fix historical orders.
+              Scans every past order and subtracts sold quantities from current
+              product stock. Run this once to fix historical orders.
             </p>
           </div>
           <button
-            onClick={syncStockFromOrders} disabled={syncing}
-            style={{ padding: "10px 22px", border: "none", borderRadius: "10px", fontWeight: "700", fontSize: "13px", cursor: syncing ? "not-allowed" : "pointer", whiteSpace: "nowrap", background: syncing ? "#ccc" : `linear-gradient(135deg, ${BROWN}, ${RUST})`, color: "#fff" }}
+            onClick={syncStockFromOrders}
+            disabled={syncing}
+            style={{
+              padding: "10px 22px",
+              border: "none",
+              borderRadius: "10px",
+              fontWeight: "700",
+              fontSize: "13px",
+              cursor: syncing ? "not-allowed" : "pointer",
+              whiteSpace: "nowrap",
+              background: syncing
+                ? "#ccc"
+                : `linear-gradient(135deg, ${BROWN}, ${RUST})`,
+              color: "#fff",
+            }}
           >
             {syncing ? "Syncing..." : "Run Stock Sync"}
           </button>
         </div>
         {syncResult && (
           <div style={{ marginTop: "18px" }}>
-            <p style={{ margin: "0 0 10px", fontWeight: "700", fontSize: "13px", color: syncResult.updated > 0 ? "#27ae60" : "#888" }}>
-              {syncResult.updated > 0 ? `✅ Updated ${syncResult.updated} product(s)` : "No products needed updating"}
+            <p
+              style={{
+                margin: "0 0 10px",
+                fontWeight: "700",
+                fontSize: "13px",
+                color: syncResult.updated > 0 ? "#27ae60" : "#888",
+              }}
+            >
+              {syncResult.updated > 0
+                ? `✅ Updated ${syncResult.updated} product(s)`
+                : "No products needed updating"}
             </p>
-            <div style={{ background: "#f8f8f8", borderRadius: "10px", padding: "12px 16px", maxHeight: "180px", overflowY: "auto" }}>
+            <div
+              style={{
+                background: "#f8f8f8",
+                borderRadius: "10px",
+                padding: "12px 16px",
+                maxHeight: "180px",
+                overflowY: "auto",
+              }}
+            >
               {syncResult.log.map((line, i) => (
-                <p key={i} style={{ margin: "3px 0", fontSize: "12px", fontFamily: "monospace", color: "#444" }}>{line}</p>
+                <p
+                  key={i}
+                  style={{
+                    margin: "3px 0",
+                    fontSize: "12px",
+                    fontFamily: "monospace",
+                    color: "#444",
+                  }}
+                >
+                  {line}
+                </p>
               ))}
             </div>
           </div>
