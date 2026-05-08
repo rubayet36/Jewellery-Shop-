@@ -25,7 +25,7 @@ function LandingPage() {
   };
 
   return (
-    <div>
+    <div className="bg-brand-brown">
       <Navbar />
       <Hero />
       <Features categories={categories} activeCategory={activeCategory} onSelect={handleCategorySelect} />

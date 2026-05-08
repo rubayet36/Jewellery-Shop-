@@ -15,10 +15,14 @@ export function CartProvider({ children }) {
 
   const addToCart = (product, color = "", qty = 1) => {
     const key = `${product.id}__${color}`;
+    const maxStock = product.stock ?? Infinity;
     setCartItems((prev) => {
       const existing = prev.find((i) => i.key === key);
-      if (existing) return prev.map((i) => i.key === key ? { ...i, qty: i.qty + qty } : i);
-      return [...prev, { ...product, key, color, qty }];
+      if (existing) {
+        const newQty = Math.min(existing.qty + qty, maxStock);
+        return prev.map((i) => i.key === key ? { ...i, qty: newQty } : i);
+      }
+      return [...prev, { ...product, key, color, qty: Math.min(qty, maxStock) }];
     });
     setIsOpen(true);
   };
@@ -27,7 +31,14 @@ export function CartProvider({ children }) {
 
   const updateQty = (key, delta) => {
     setCartItems((prev) =>
-      prev.map((i) => i.key === key ? { ...i, qty: i.qty + delta } : i).filter((i) => i.qty > 0)
+      prev
+        .map((i) => {
+          if (i.key !== key) return i;
+          const maxStock = i.stock ?? Infinity;
+          const newQty = Math.min(Math.max(i.qty + delta, 0), maxStock);
+          return { ...i, qty: newQty };
+        })
+        .filter((i) => i.qty > 0)
     );
   };
 

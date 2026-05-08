@@ -150,7 +150,11 @@ export default function ProductModal({ product, onClose }) {
             <div style={{ display: "flex", alignItems: "center", border: `1.5px solid ${BEIGE}`, borderRadius: "10px", overflow: "hidden" }}>
               <button onClick={() => setQty(Math.max(1, qty - 1))} style={{ padding: "10px 14px", background: LIGHT, border: "none", cursor: "pointer", fontSize: "16px", color: BROWN }}>−</button>
               <span style={{ padding: "10px 16px", fontWeight: "700", color: BROWN, fontSize: "15px" }}>{qty}</span>
-              <button onClick={() => setQty(qty + 1)} style={{ padding: "10px 14px", background: LIGHT, border: "none", cursor: "pointer", fontSize: "16px", color: BROWN }}>+</button>
+              <button
+                onClick={() => setQty(Math.min(qty + 1, product.stock || 1))}
+                disabled={qty >= (product.stock || 0)}
+                style={{ padding: "10px 14px", background: LIGHT, border: "none", cursor: qty >= (product.stock || 0) ? "not-allowed" : "pointer", fontSize: "16px", color: qty >= (product.stock || 0) ? "#bbb" : BROWN }}
+              >+</button>
             </div>
             <button
               onClick={handleAddToCart}

@@ -12,7 +12,14 @@ function Features({ categories, activeCategory = "", onSelect }) {
           Showing: <strong>{activeCategory}</strong> &nbsp;
           <button
             onClick={() => onSelect(activeCategory)}
-            style={{ color: "#a44f31", fontWeight: "700", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
+            style={{
+              color: "#a44f31",
+              fontWeight: "700",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              textDecoration: "underline",
+            }}
           >
             Clear ✕
           </button>
@@ -36,4 +43,4 @@ function Features({ categories, activeCategory = "", onSelect }) {
   );
 }
 
-export default Features;
+export default Features;
