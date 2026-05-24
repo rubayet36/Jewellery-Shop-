@@ -94,6 +94,7 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
         })
       );
 
+      localStorage.removeItem("jewel_cart");
       clearCart();
       setSuccess(true);
       setForm({ name: "", phone: "", address: "" });
@@ -122,7 +123,7 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
 
       {/* Modal */}
       <div
-        style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#fffafd", borderRadius: "24px", width: "min(480px, 92vw)", boxShadow: "0 30px 80px rgba(157,23,77,0.25)", zIndex: 10001, overflow: "hidden", animation: "scaleIn 0.25s ease" }}
+        style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#fffafd", borderRadius: "24px", width: "min(480px, 92vw)", maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 30px 80px rgba(157,23,77,0.25)", zIndex: 10001, overflow: "hidden", animation: "scaleIn 0.25s ease" }}
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`@keyframes scaleIn { from { opacity:0; transform: translate(-50%,-50%) scale(0.92); } to { opacity:1; transform: translate(-50%,-50%) scale(1); } }`}</style>
@@ -135,7 +136,7 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
           </button>
         </div>
 
-        <div style={{ padding: "24px" }}>
+        <div style={{ padding: "24px", overflowY: "auto", flex: 1 }}>
           {success ? (
             <div style={{ textAlign: "center", padding: "20px 0" }}>
               <div style={{ fontSize: "56px", marginBottom: "16px" }}>✅</div>

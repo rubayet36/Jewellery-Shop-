@@ -12,12 +12,13 @@ function Hero() {
           <h1 className="mb-5 text-5xl font-extrabold leading-tight text-[#831843] md:text-7xl">
             Blush pieces for every sweet moment 🎀
           </h1>
-          <p className="mb-8 max-w-md text-base leading-7 text-[#5c3d4c] md:text-lg">
-            Soft pink accessories, delicate shine, and cute everyday styling made to feel fresh and feminine.
+          <p className="mb-16 max-w-md text-base leading-7 text-[#5c3d4c] md:text-lg">
+            Accessories, delicate shine, and cute everyday styling made to feel fresh and feminine.
           </p>
           <a
             href="#products-section"
             className="inline-flex items-center rounded-full bg-[#ff5d8f] px-7 py-3 text-sm font-extrabold uppercase tracking-[0.14em] text-white shadow-[0_18px_45px_rgba(255,93,143,0.18)] cute-bubble-btn"
+            style={{ marginTop: "28px" }}
           >
             Shop the best ✨
           </a>

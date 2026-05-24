@@ -17,7 +17,7 @@ export function ToastProvider({ children }) {
   return (
     <ToastCtx.Provider value={{ toast }}>
       {children}
-      <div style={{ position: "fixed", bottom: "28px", right: "28px", zIndex: 99999, display: "flex", flexDirection: "column-reverse", gap: "10px", pointerEvents: "none" }}>
+      <div style={{ position: "fixed", top: "28px", right: "28px", zIndex: 99999, display: "flex", flexDirection: "column", gap: "10px", pointerEvents: "none" }}>
         {toasts.map((t) => (
           <div key={t.id} style={{
             padding: "13px 20px", background: bg[t.type] || bg.success, color: "#fff",

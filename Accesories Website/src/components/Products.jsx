@@ -18,6 +18,20 @@ function Products({
   const [wishlist, setWishlist] = useState(() =>
     JSON.parse(localStorage.getItem("jewel_wishlist") || "[]"),
   );
+  const [categoriesList, setCategoriesList] = useState([]);
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const { data } = await supabase.from("categories").select("id, name");
+        if (data) setCategoriesList(data);
+      } catch (err) {
+        console.error("Error loading categories fallback:", err);
+      }
+    }
+    loadCategories();
+  }, []);
+
 
   useEffect(() => {
     if (propProducts) {
@@ -72,12 +86,29 @@ function Products({
   const list = (() => {
     let base = showSaleOnly ? products.filter((p) => p.is_sale) : products;
     if (categoryFilter) {
-      // match against categories.name (joined) OR category text field
-      base = base.filter(
-        (p) =>
-          p.categories?.name?.toLowerCase() === categoryFilter.toLowerCase() ||
-          p.category?.toLowerCase() === categoryFilter.toLowerCase(),
-      );
+      base = base.filter((p) => {
+        let catName = "";
+        if (p.categories) {
+          if (Array.isArray(p.categories)) {
+            catName = p.categories[0]?.name || "";
+          } else if (typeof p.categories === "object") {
+            catName = p.categories.name || "";
+          }
+        }
+
+        if (!catName && p.category_id && categoriesList.length > 0) {
+          const found = categoriesList.find((c) => c.id === p.category_id);
+          if (found) {
+            catName = found.name;
+          }
+        }
+
+        if (!catName && p.category) {
+          catName = p.category;
+        }
+
+        return catName?.toLowerCase().trim() === categoryFilter.toLowerCase().trim();
+      });
     }
     return base;
   })();

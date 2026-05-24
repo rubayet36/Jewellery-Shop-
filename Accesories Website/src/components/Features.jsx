@@ -11,7 +11,7 @@ function Features({ categories, activeCategory = "", onSelect }) {
       </h2>
 
       {activeCategory && (
-        <p className="text-center text-sm text-brand-rust mb-8">
+        <p className="text-center text-sm text-[#db2777]" style={{ marginBottom: "40px", position: "relative", zIndex: 20 }}>
           Showing: <strong>{activeCategory}</strong> &nbsp;
           <button
             onClick={() => onSelect(activeCategory)}
