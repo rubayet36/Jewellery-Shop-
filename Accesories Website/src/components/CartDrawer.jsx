@@ -6,7 +6,7 @@ import { RUST, BROWN, BEIGE, LIGHT } from "./navbarConstants";
 // ── CartDrawer ────────────────────────────────────────────────────────────────
 // Slide-out drawer showing cart items with qty controls (stock-limited)
 // and a "Proceed to Checkout" button.
-export default function CartDrawer({ onCheckout }) {
+export default function CartDrawer({ onCheckout, isOutsideDhaka, setIsOutsideDhaka }) {
   const navigate = useNavigate();
   const {
     cartItems,
@@ -17,6 +17,9 @@ export default function CartDrawer({ onCheckout }) {
     isOpen,
     closeCart,
   } = useCart();
+
+  const deliveryCharge = isOutsideDhaka ? 150 : 80;
+  const grandTotal = totalPrice + deliveryCharge;
 
   return (
     <>
@@ -273,18 +276,53 @@ export default function CartDrawer({ onCheckout }) {
           <div
             style={{ padding: "18px 20px", borderTop: `1px solid ${BEIGE}` }}
           >
+            {/* Delivery Charge Toggles */}
+            <div
+              style={{
+                background: "#fff5f8",
+                borderRadius: "14px",
+                border: "2px solid #ffccd5",
+                padding: "10px 14px",
+                marginBottom: "14px",
+                fontSize: "13px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#5c3d4c", fontWeight: "700", marginBottom: "8px" }}>
+                <span>Delivery Charge:</span>
+                <span>৳{deliveryCharge}</span>
+              </div>
+              <label style={{ display: "flex", alignItems: "center", gap: "8px", color: BROWN, fontWeight: "800", cursor: "pointer", userSelect: "none" }}>
+                <input
+                  type="checkbox"
+                  checked={isOutsideDhaka}
+                  onChange={(e) => setIsOutsideDhaka(e.target.checked)}
+                  style={{
+                    accentColor: RUST,
+                    width: "16px",
+                    height: "16px",
+                    cursor: "pointer",
+                  }}
+                />
+                🌸 Outside Dhaka (৳150)
+              </label>
+            </div>
+
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
+                alignItems: "center",
                 marginBottom: "14px",
               }}
             >
-              <span style={{ fontWeight: "600", color: "#555" }}>Total</span>
+              <div>
+                <span style={{ fontSize: "12px", color: "#888", display: "block" }}>Subtotal: ৳{totalPrice.toFixed(0)}</span>
+                <span style={{ fontWeight: "700", color: "#555" }}>Grand Total</span>
+              </div>
               <span
-                style={{ fontSize: "20px", fontWeight: "800", color: BROWN }}
+                style={{ fontSize: "22px", fontWeight: "800", color: BROWN }}
               >
-                ৳{totalPrice.toFixed(0)}
+                ৳{grandTotal.toFixed(0)}
               </span>
             </div>
             <button

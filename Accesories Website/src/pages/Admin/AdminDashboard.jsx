@@ -4,6 +4,7 @@ import OverviewTab from "./OverviewTab";
 import ProductsTab from "./ProductsTab";
 import TransactionsTab from "./TransactionsTab";
 import AnalyticsTab from "./AnalyticsTab";
+import CategoriesTab from "./CategoriesTab";
 
 // ── AdminDashboard ────────────────────────────────────────────────────────────
 // Sidebar shell that checks authentication with Supabase Auth.
@@ -44,6 +45,7 @@ function AdminDashboard() {
   const tabs = [
     { id: "overview", label: "📊 Overview" },
     { id: "analytics", label: "📈 Analytics" },
+    { id: "categories", label: "📂 Categories" },
     { id: "products", label: "💎 Products" },
     { id: "transactions", label: "📦 Transactions" },
   ];
@@ -201,6 +203,7 @@ function AdminDashboard() {
       >
         {activeTab === "overview" && <OverviewTab />}
         {activeTab === "analytics" && <AnalyticsTab />}
+        {activeTab === "categories" && <CategoriesTab />}
         {activeTab === "products" && <ProductsTab />}
         {activeTab === "transactions" && <TransactionsTab />}
       </main>

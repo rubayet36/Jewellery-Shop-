@@ -7,11 +7,56 @@ import { RUST, BROWN, BEIGE, LIGHT } from "./navbarConstants";
 // ── CheckoutModal ─────────────────────────────────────────────────────────────
 // Collects customer name, phone, and delivery address, submits the order to
 // Supabase, decrements product stock, then reloads the page so stock is fresh.
-export default function CheckoutModal({ onClose }) {
+export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDhaka }) {
   const { cartItems, totalPrice, clearCart } = useCart();
   const [form, setForm] = useState({ name: "", phone: "", address: "" });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const deliveryCharge = isOutsideDhaka ? 150 : 80;
+  const grandTotal = totalPrice + deliveryCharge;
+
+  const sendGmailNotification = async (orderPayload) => {
+    // 🌸 Configure your free EmailJS account variables here (Gmail Integration)
+    const SERVICE_ID = "service_9u2mvd7";       // Your EmailJS Service ID
+    const TEMPLATE_ID = "template_u2r84la";     // Your EmailJS Template ID
+    const PUBLIC_KEY = "8521LBhipI56HjJ1d";     // Your EmailJS Public Key
+
+    if (!PUBLIC_KEY || PUBLIC_KEY === "YOUR_EMAILJS_PUBLIC_KEY") {
+      console.log("🌸 Gmail Alert: EmailJS is not configured yet! Register at emailjs.com and set SERVICE_ID, TEMPLATE_ID, and PUBLIC_KEY inside CheckoutModal.jsx to receive instant Gmail notifications! 🧸💖");
+      return;
+    }
+
+    try {
+      const itemsSummary = orderPayload.items
+        .map((item) => `• ${item.name} ${item.color ? `(${item.color})` : ""} × ${item.qty} (৳${(item.price * item.qty).toFixed(0)})`)
+        .join("\n");
+
+      await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          service_id: SERVICE_ID,
+          template_id: TEMPLATE_ID,
+          user_id: PUBLIC_KEY,
+          template_params: {
+            customer_name: orderPayload.customer_name,
+            customer_phone: orderPayload.customer_phone,
+            delivery_address: orderPayload.delivery_address,
+            customer_address: orderPayload.delivery_address, // Ensures both variables work!
+            items_summary: itemsSummary,
+            subtotal: `৳${orderPayload.total}`,
+            delivery_charge: `৳${deliveryCharge}`,
+            grand_total: `৳${grandTotal}`,
+            shipping_region: isOutsideDhaka ? "Outside Dhaka" : "Inside Dhaka",
+          },
+        }),
+      });
+      console.log("📬 Gmail notification sent successfully via EmailJS!");
+    } catch (err) {
+      console.error("Error triggering Gmail notification:", err);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +66,9 @@ export default function CheckoutModal({ onClose }) {
         customer_name: form.name,
         customer_phone: form.phone,
         delivery_address: form.address,
-        total: totalPrice,
+        total: totalPrice, // ONLY product subtotal (revenue)
+        delivery_charge: deliveryCharge, // Custom shipping column
+        is_outside_dhaka: isOutsideDhaka, // Custom shipping region
         status: "pending",
         items: cartItems.map((i) => ({
           id: i.id,
@@ -34,6 +81,9 @@ export default function CheckoutModal({ onClose }) {
 
       const { error } = await supabase.from("orders").insert([orderPayload]);
       if (error) throw error;
+
+      // Trigger Email Alert
+      await sendGmailNotification(orderPayload);
 
       // Decrement stock for each purchased product
       await Promise.all(
@@ -109,11 +159,36 @@ export default function CheckoutModal({ onClose }) {
                     </div>
                   );
                 })}
+                <div style={{ borderTop: `1px dashed ${BEIGE}`, marginTop: "8px", paddingTop: "8px", display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#555" }}>
+                  <span>Subtotal</span>
+                  <span>৳{totalPrice.toFixed(0)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#555", marginTop: "2px" }}>
+                  <span>Delivery ({isOutsideDhaka ? "Outside Dhaka" : "Inside Dhaka"})</span>
+                  <span>৳{deliveryCharge}</span>
+                </div>
                 <div style={{ borderTop: `1px solid ${BEIGE}`, marginTop: "8px", paddingTop: "8px", display: "flex", justifyContent: "space-between", fontWeight: "800", color: BROWN }}>
-                  <span>Total</span><span>৳{totalPrice.toFixed(0)}</span>
+                  <span>Total Due</span>
+                  <span>৳{grandTotal.toFixed(0)}</span>
                 </div>
               </div>
 
+              {isOutsideDhaka && (
+                <div
+                  style={{
+                    background: "#fff0f3",
+                    border: "2px dashed #ff85a1",
+                    borderRadius: "14px",
+                    padding: "12px 16px",
+                    fontSize: "13px",
+                    color: BROWN,
+                    lineHeight: "1.5",
+                    textAlign: "left",
+                  }}
+                >
+                  🌸 <strong>Advance Payment Notice:</strong> For orders outside Dhaka, an advance delivery charge of <strong>৳150</strong> is required to confirm the shipment. Our team will contact you shortly to guide you through the payment. Thank you! 🧸💖
+                </div>
+              )}
               {field("CUSTOMER NAME *", <input required type="text" placeholder="Your full name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputCss} />)}
               {field("PHONE NUMBER *",  <input required type="tel"  placeholder="e.g. 01XXXXXXXXX"  value={form.phone}   onChange={e => setForm({ ...form, phone: e.target.value })}   style={inputCss} />)}
               {field("DELIVERY ADDRESS *", <textarea required rows={3} placeholder="House, Road, Area, City" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} style={{ ...inputCss, resize: "vertical", fontFamily: "inherit" }} />)}

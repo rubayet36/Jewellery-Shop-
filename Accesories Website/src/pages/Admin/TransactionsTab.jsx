@@ -125,7 +125,10 @@ export default function TransactionsTab() {
             </p>
           </td>
           <td style={{ ...tdStyle, fontWeight: "800", color: BROWN }}>
-            ৳{o.total}
+            ৳{Number(o.total || 0) + Number(o.delivery_charge || 80)}
+            <span style={{ fontSize: "10px", fontWeight: "600", color: "#888", display: "block", marginTop: "2px" }}>
+              (৳{o.total} sub + ৳{o.delivery_charge || 80} del)
+            </span>
           </td>
           <td style={{ ...tdStyle, fontSize: "12px", color: "#888" }}>
             {new Date(o.created_at).toLocaleDateString()}
@@ -246,7 +249,23 @@ export default function TransactionsTab() {
                   </div>
                 ))}
               </div>
-              <p style={{ margin: "8px 0 0", fontSize: "12px", color: "#888" }}>
+              <div style={{ marginTop: "12px", display: "flex", flexWrap: "wrap", gap: "24px", fontSize: "13px", background: "#fff9fb", border: "1px dashed #ffccd5", borderRadius: "12px", padding: "10px 16px" }}>
+                <div>
+                  <span style={{ color: "#888" }}>Product Revenue: </span>
+                  <span style={{ fontWeight: "700", color: BROWN }}>৳{o.total}</span>
+                </div>
+                <div>
+                  <span style={{ color: "#888" }}>Delivery Fee: </span>
+                  <span style={{ fontWeight: "700", color: BROWN }}>
+                    ৳{o.delivery_charge || 80} ({o.is_outside_dhaka ? "Outside Dhaka" : "Inside Dhaka"})
+                  </span>
+                </div>
+                <div>
+                  <span style={{ color: "#888" }}>Grand Total: </span>
+                  <span style={{ fontWeight: "800", color: RUST }}>৳{Number(o.total || 0) + Number(o.delivery_charge || 80)}</span>
+                </div>
+              </div>
+              <p style={{ margin: "12px 0 0", fontSize: "12px", color: "#888" }}>
                 📍 {o.delivery_address || "No address"} &nbsp;|&nbsp; 📞{" "}
                 {o.customer_phone || "No phone"}
               </p>

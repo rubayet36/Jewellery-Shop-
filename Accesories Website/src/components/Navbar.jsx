@@ -22,6 +22,7 @@ function Navbar({ solid = false }) {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [isOutsideDhaka, setIsOutsideDhaka] = useState(false);
   const { totalItems, openCart } = useCart();
 
   useEffect(() => {
@@ -141,10 +142,20 @@ function Navbar({ solid = false }) {
       </div>
 
       {/* Cart drawer (backdrop + drawer) */}
-      <CartDrawer onCheckout={() => setShowCheckout(true)} />
+      <CartDrawer
+        onCheckout={() => setShowCheckout(true)}
+        isOutsideDhaka={isOutsideDhaka}
+        setIsOutsideDhaka={setIsOutsideDhaka}
+      />
 
       {/* Checkout modal */}
-      {showCheckout && <CheckoutModal onClose={() => setShowCheckout(false)} />}
+      {showCheckout && (
+        <CheckoutModal
+          onClose={() => setShowCheckout(false)}
+          isOutsideDhaka={isOutsideDhaka}
+          setIsOutsideDhaka={setIsOutsideDhaka}
+        />
+      )}
     </>
   );
 }
