@@ -1,5 +1,8 @@
 function CategoryBox({ image, name, filterKey, isActive = false, onSelect }) {
   const key = filterKey || name;
+  const RUST = "#db2777";
+  const BROWN = "#831843";
+
   return (
     <div
       className="flex flex-col items-center group cursor-pointer"
@@ -14,24 +17,25 @@ function CategoryBox({ image, name, filterKey, isActive = false, onSelect }) {
       <div
         className="p-1.5 rounded-full mb-4"
         style={{
-          border: isActive ? "2.5px solid #a44f31" : "1px solid #d1d5db",
+          background: "#fff",
+          border: isActive ? `2.5px solid ${RUST}` : "1px solid #fbcfe8",
           transform: isActive ? "scale(1.08)" : "scale(1)",
-          boxShadow: isActive ? "0 0 0 4px rgba(164,79,49,0.18)" : "none",
+          boxShadow: isActive ? `0 0 0 5px rgba(219,39,119,0.18), 0 16px 34px rgba(219,39,119,0.18)` : "0 10px 24px rgba(244,114,182,0.12)",
           transition:
             "transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease",
         }}
         onMouseEnter={(e) => {
           if (!isActive) {
-            e.currentTarget.style.border = "2px solid #a44f31";
+            e.currentTarget.style.border = `2px solid ${RUST}`;
             e.currentTarget.style.boxShadow =
-              "0 0 0 5px rgba(164,79,49,0.15), 0 8px 30px rgba(164,79,49,0.22)";
+              "0 0 0 5px rgba(219,39,119,0.15), 0 14px 34px rgba(219,39,119,0.22)";
             e.currentTarget.style.transform = "scale(1.07)";
           }
         }}
         onMouseLeave={(e) => {
           if (!isActive) {
-            e.currentTarget.style.border = "1px solid #d1d5db";
-            e.currentTarget.style.boxShadow = "none";
+            e.currentTarget.style.border = "1px solid #fbcfe8";
+            e.currentTarget.style.boxShadow = "0 10px 24px rgba(244,114,182,0.12)";
             e.currentTarget.style.transform = "scale(1)";
           }
         }}
@@ -59,21 +63,21 @@ function CategoryBox({ image, name, filterKey, isActive = false, onSelect }) {
       <span
         className="text-sm uppercase tracking-wider"
         style={{
-          color: isActive ? "#a44f31" : "#752700",
+          color: isActive ? RUST : BROWN,
           fontWeight: isActive ? "800" : "500",
           transition:
             "color 0.2s ease, font-weight 0.2s ease, letter-spacing 0.2s ease",
         }}
         onMouseEnter={(e) => {
           if (!isActive) {
-            e.currentTarget.style.color = "#a44f31";
+            e.currentTarget.style.color = RUST;
             e.currentTarget.style.fontWeight = "700";
             e.currentTarget.style.letterSpacing = "2px";
           }
         }}
         onMouseLeave={(e) => {
           if (!isActive) {
-            e.currentTarget.style.color = "#752700";
+            e.currentTarget.style.color = BROWN;
             e.currentTarget.style.fontWeight = "500";
             e.currentTarget.style.letterSpacing = "";
           }
@@ -86,7 +90,7 @@ function CategoryBox({ image, name, filterKey, isActive = false, onSelect }) {
         <span
           style={{
             fontSize: "10px",
-            color: "#a44f31",
+            color: RUST,
             marginTop: "4px",
             fontWeight: "700",
             letterSpacing: "0.5px",

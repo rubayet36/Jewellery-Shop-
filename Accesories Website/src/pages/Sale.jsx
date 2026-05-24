@@ -3,15 +3,16 @@ import { supabase } from "../utils/supabase";
 import Navbar from "../components/Navbar";
 import Products from "../components/Products";
 
-const BROWN      = "#752700";
-const BEIGE      = "#f3e0d0";
-const RUST       = "#a44f31";
-const LIGHT_BEIGE = "#fdf6f0";
+const BROWN = "#9d174d";
+const BEIGE = "#ffe4ef";
+const RUST = "#ec4899";
+const LIGHT_BEIGE = "#fffafd";
 
 export default function Sale() {
   const [products, setProducts]                 = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [sortBy, setSortBy]                     = useState("default");
+  const [searchQuery, setSearchQuery]           = useState("");
   const [filters, setFilters]                   = useState({
     priceMin: "",
     priceMax: "",
@@ -20,39 +21,66 @@ export default function Sale() {
   });
 
   useEffect(() => { fetchProducts(); }, []);
-  useEffect(() => { applyFilters(); }, [products, filters, sortBy]);
+  useEffect(() => { applyFilters(); }, [products, filters, sortBy, searchQuery]);
 
   const fetchProducts = async () => {
-    const { data, error } = await supabase.from("products").select("*");
-    if (error) console.error("Error fetching products:", error);
-    else setProducts((data || []).filter(p => p.is_sale));
+    // Select categories(name) to support joined category filtering
+    const { data, error } = await supabase.from("products").select("*, categories(name)");
+    if (error) {
+      console.error("Error fetching products:", error);
+    } else {
+      // Map category name to p.category, filter only sale items
+      const enriched = (data || [])
+        .filter(p => p.is_sale)
+        .map(p => ({
+          ...p,
+          category: p.categories?.name
+        }));
+      setProducts(enriched);
+    }
   };
 
   const applyFilters = () => {
     let f = [...products];
+
+    // Search query filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      f = f.filter(
+        (p) =>
+          p.name?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q)
+      );
+    }
+
     if (filters.priceMin)        f = f.filter((p) => (p.sale_price || p.price) >= parseFloat(filters.priceMin));
     if (filters.priceMax)        f = f.filter((p) => (p.sale_price || p.price) <= parseFloat(filters.priceMax));
     if (filters.category)        f = f.filter((p) => p.category === filters.category);
     if (filters.availability === "in-stock")    f = f.filter((p) => p.stock > 0);
     if (filters.availability === "out-of-stock") f = f.filter((p) => p.stock === 0);
+    
     if (sortBy === "price-asc")  f.sort((a, b) => (a.sale_price || a.price) - (b.sale_price || b.price));
     if (sortBy === "price-desc") f.sort((a, b) => (b.sale_price || b.price) - (a.sale_price || a.price));
     if (sortBy === "name-asc")   f.sort((a, b) => a.name?.localeCompare(b.name));
+    
     setFilteredProducts(f);
   };
 
   const set = (key, val) => setFilters((prev) => ({ ...prev, [key]: val }));
-  const clear = () => setFilters({ priceMin: "", priceMax: "", category: "", availability: "" });
+  const clear = () => {
+    setFilters({ priceMin: "", priceMax: "", category: "", availability: "" });
+    setSearchQuery("");
+  };
 
   const categories      = [...new Set(products.map((p) => p.category).filter(Boolean))];
-  const hasActiveFilter = filters.priceMin || filters.priceMax || filters.category || filters.availability;
+  const hasActiveFilter = filters.priceMin || filters.priceMax || filters.category || filters.availability || searchQuery;
 
   const pill = (active) => ({
     padding: "7px 18px",
     borderRadius: "999px",
     border: `1.5px solid ${active ? RUST : "#ddd"}`,
     background: active ? RUST : "#fff",
-    color: active ? "#fff" : "#555",
+    color: active ? "#fff" : BROWN,
     fontSize: "13px",
     fontWeight: "600",
     cursor: "pointer",
@@ -67,9 +95,9 @@ export default function Sale() {
       {/* ── Page Banner ────────────────────────────────────────────────────── */}
       <div
         style={{
-          background: `linear-gradient(135deg, #e74c3c 0%, ${RUST} 100%)`,
-          paddingTop: "100px",
-          paddingBottom: "36px",
+          backgroundColor: RUST,
+          paddingTop: "80px",
+          paddingBottom: "40px",
         }}
       >
         <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 40px" }}>
@@ -79,14 +107,59 @@ export default function Sale() {
           <h1 style={{ color: "#fff", fontSize: "34px", fontWeight: "700", margin: 0 }}>
             Special Offers
           </h1>
-          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "14px", marginTop: "6px" }}>
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "14px", marginTop: "6px", marginBottom: "18px" }}>
             {products.length} discounted pieces, limited time only
           </p>
+
+          {/* Search bar integration */}
+          <div style={{ maxWidth: "450px", position: "relative" }}>
+            <input
+              type="text"
+              placeholder="Search discounted pieces..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 18px",
+                paddingLeft: "38px",
+                borderRadius: "999px",
+                border: "none",
+                background: "rgba(255, 255, 255, 0.22)",
+                color: "#fff",
+                fontSize: "13px",
+                outline: "none",
+                backdropFilter: "blur(10px)",
+                boxShadow: "0 8px 24px rgba(157, 23, 77, 0.1)",
+                transition: "all 0.2s",
+              }}
+            />
+            <span style={{ position: "absolute", left: "14px", top: "10px", color: "rgba(255,255,255,0.7)", fontSize: "13px" }}>
+              🔍
+            </span>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                style={{
+                  position: "absolute",
+                  right: "14px",
+                  top: "8px",
+                  background: "none",
+                  border: "none",
+                  color: "#fff",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* ── Filter Bar ─────────────────────────────────────────────────────── */}
-      <div style={{ background: "#fff", borderBottom: `1px solid ${BEIGE}`, boxShadow: "0 2px 12px rgba(117,39,0,0.06)" }}>
+      <div style={{ background: "#fff", borderBottom: `1px solid ${BEIGE}`, boxShadow: "0 8px 24px rgba(236,72,153,0.08)" }}>
         <div
           style={{
             maxWidth: "1400px",
@@ -183,12 +256,12 @@ export default function Sale() {
             No products found
           </h3>
           <p style={{ color: "#999", marginBottom: "24px" }}>
-            Try adjusting your filters.
+            Try adjusting your filters or search terms.
           </p>
           <button
             onClick={clear}
             style={{
-              background: `linear-gradient(135deg, ${BROWN}, ${RUST})`,
+              background: RUST,
               color: "#fff",
               border: "none",
               borderRadius: "10px",

@@ -3,10 +3,10 @@ import { FiX, FiHeart } from "react-icons/fi";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 
-const BROWN = "#752700";
-const RUST = "#a44f31";
-const BEIGE = "#f3e0d0";
-const LIGHT = "#fdf6f0";
+const BROWN = "#831843";
+const RUST = "#db2777";
+const BEIGE = "#ffe4ef";
+const LIGHT = "#fffafd";
 
 export default function ProductModal({ product, onClose }) {
   const [selectedColor, setSelectedColor] = useState("");
@@ -84,14 +84,14 @@ export default function ProductModal({ product, onClose }) {
     >
       <div
         style={{
-          background: "#fff",
-          borderRadius: "20px",
+          background: "#fffafd",
+          borderRadius: "24px",
           maxWidth: "820px",
           width: "100%",
           maxHeight: "90vh",
           overflow: "hidden",
           display: "flex",
-          boxShadow: "0 25px 60px rgba(0,0,0,0.3)",
+          boxShadow: "0 28px 70px rgba(157,23,77,0.28)",
           animation: "scaleIn 0.25s ease",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -101,7 +101,7 @@ export default function ProductModal({ product, onClose }) {
           style={{
             width: "42%",
             flexShrink: 0,
-            background: BEIGE,
+            background: "#ffeef2",
             position: "relative",
           }}
         >
@@ -111,7 +111,7 @@ export default function ProductModal({ product, onClose }) {
                 position: "absolute",
                 top: "14px",
                 left: "14px",
-                background: "#e74c3c",
+                background: RUST,
                 color: "#fff",
                 padding: "4px 12px",
                 borderRadius: "999px",
@@ -164,7 +164,7 @@ export default function ProductModal({ product, onClose }) {
             <button
               onClick={toggleWishlist}
               style={{
-                background: wishlisted ? "#ffe8e8" : "#f5f5f5",
+                background: wishlisted ? "#ffe4ef" : "#fff",
                 border: "none",
                 borderRadius: "999px",
                 width: "34px",
@@ -184,7 +184,7 @@ export default function ProductModal({ product, onClose }) {
             <button
               onClick={onClose}
               style={{
-                background: "#f5f5f5",
+                background: "#fff",
                 border: "none",
                 borderRadius: "999px",
                 width: "34px",
@@ -403,10 +403,10 @@ export default function ProductModal({ product, onClose }) {
                 background:
                   product.stock === 0
                     ? "#ccc"
-                    : `linear-gradient(135deg, ${BROWN}, ${RUST})`,
+                    : RUST,
                 color: "#fff",
                 border: "none",
-                borderRadius: "10px",
+                borderRadius: "999px",
                 fontSize: "14px",
                 fontWeight: "700",
                 cursor: product.stock === 0 ? "not-allowed" : "pointer",

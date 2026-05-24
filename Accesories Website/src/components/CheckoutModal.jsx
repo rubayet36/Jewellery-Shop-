@@ -72,13 +72,13 @@ export default function CheckoutModal({ onClose }) {
 
       {/* Modal */}
       <div
-        style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#fff", borderRadius: "20px", width: "min(480px, 92vw)", boxShadow: "0 30px 80px rgba(0,0,0,0.25)", zIndex: 10001, overflow: "hidden", animation: "scaleIn 0.25s ease" }}
+        style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "#fffafd", borderRadius: "24px", width: "min(480px, 92vw)", boxShadow: "0 30px 80px rgba(157,23,77,0.25)", zIndex: 10001, overflow: "hidden", animation: "scaleIn 0.25s ease" }}
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`@keyframes scaleIn { from { opacity:0; transform: translate(-50%,-50%) scale(0.92); } to { opacity:1; transform: translate(-50%,-50%) scale(1); } }`}</style>
 
         {/* Header */}
-        <div style={{ padding: "20px 24px", background: `linear-gradient(135deg, ${BROWN}, ${RUST})`, color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ padding: "20px 24px", background: BROWN, color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", fontFamily: "'Stardom-Regular', serif" }}>Checkout</h2>
           <button onClick={onClose} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "#fff", borderRadius: "50%", width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
             <FiX size={16} />
@@ -91,7 +91,7 @@ export default function CheckoutModal({ onClose }) {
               <div style={{ fontSize: "56px", marginBottom: "16px" }}>✅</div>
               <h3 style={{ color: BROWN, fontFamily: "'Stardom-Regular', serif", margin: "0 0 8px" }}>Order Placed!</h3>
               <p style={{ color: "#666", fontSize: "14px", margin: "0 0 24px" }}>Thank you! We'll contact you soon to confirm delivery.</p>
-              <button onClick={onClose} style={{ background: `linear-gradient(135deg, ${BROWN}, ${RUST})`, color: "#fff", border: "none", borderRadius: "10px", padding: "12px 32px", fontWeight: "700", cursor: "pointer", fontSize: "14px" }}>
+              <button onClick={onClose} style={{ background: RUST, color: "#fff", border: "none", borderRadius: "999px", padding: "12px 32px", fontWeight: "700", cursor: "pointer", fontSize: "14px" }}>
                 Close
               </button>
             </div>
@@ -120,7 +120,7 @@ export default function CheckoutModal({ onClose }) {
 
               <button
                 type="submit" disabled={loading}
-                style={{ padding: "13px", background: loading ? "#ccc" : `linear-gradient(135deg, ${BROWN}, ${RUST})`, color: "#fff", border: "none", borderRadius: "12px", fontSize: "14px", fontWeight: "700", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Stardom-Regular', serif", letterSpacing: "0.5px" }}
+                style={{ padding: "13px", background: loading ? "#ccc" : RUST, color: "#fff", border: "none", borderRadius: "999px", fontSize: "14px", fontWeight: "700", cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Stardom-Regular', serif", letterSpacing: "0.5px" }}
               >
                 {loading ? "Placing Order..." : "Confirm Order →"}
               </button>

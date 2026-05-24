@@ -14,8 +14,8 @@ import CheckoutModal from "./CheckoutModal";
 //   CheckoutModal → src/components/CheckoutModal.jsx
 //   Constants     → src/components/navbarConstants.js
 
-const RUST = "#B5451B";
-const BROWN = "#752700";
+const RUST = "#db2777";
+const BROWN = "#831843";
 
 function Navbar({ solid = false }) {
   const navigate = useNavigate();
@@ -31,8 +31,8 @@ function Navbar({ solid = false }) {
     return () => window.removeEventListener("scroll", fn);
   }, [solid]);
 
-  const bg = solid ? RUST : scrolled ? RUST : "transparent";
-  const shadow = solid || scrolled ? "0 2px 16px rgba(107,58,42,0.22)" : "none";
+  const bg = solid || scrolled ? "rgba(255, 244, 249, 0.94)" : "rgba(255, 255, 255, 0.18)";
+  const shadow = solid || scrolled ? "0 14px 34px rgba(236,72,153,0.16)" : "none";
 
   const links = [
     { label: "Home", path: "/" },
@@ -57,27 +57,30 @@ function Navbar({ solid = false }) {
 
       {/* ── Main Bar ──────────────────────────────────────────────────── */}
       <div
-        className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-10 py-3 text-white"
+        className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-5 md:px-10 py-1 md:py-1.5"
         style={{
           backgroundColor: bg,
           boxShadow: shadow,
+          color: solid || scrolled ? BROWN : "#fff",
+          backdropFilter: "blur(18px)",
           transition: solid
-            ? "none"
-            : "background-color 0.4s ease, box-shadow 0.4s ease",
+             ? "none"
+             : "background-color 0.4s ease, box-shadow 0.4s ease, color 0.4s ease",
+          borderBottom: solid || scrolled ? "1px solid rgba(244,114,182,0.22)" : "1px solid rgba(255,255,255,0.22)",
           borderRadius: solid
-            ? "0 0 16px 16px"
+            ? "0 0 24px 24px"
             : scrolled
-              ? "0 0 16px 16px"
+              ? "0 0 24px 24px"
               : "0",
         }}
       >
         {/* Logo */}
         <div className="cursor-pointer" onClick={() => navigate("/")}>
-          <img src="/logo.png" alt="Logo" className="h-12 w-auto" />
+          <img src="/logo.png" alt="Logo" className="h-14 md:h-16 w-auto" />
         </div>
 
         {/* Nav links */}
-        <div className="flex items-center gap-8 text-[15px]">
+        <div className="flex items-center gap-4 md:gap-8 text-[14px] md:text-[15px]">
           {links.map(({ label, path }) => (
             <button
               key={path}
@@ -85,14 +88,14 @@ function Navbar({ solid = false }) {
               style={{
                 fontFamily: "'Stardom-Regular', serif",
                 fontWeight: location.pathname === path ? "700" : "400",
-                borderBottom:
-                  location.pathname === path
-                    ? "2px solid rgba(255,255,255,0.8)"
-                    : "2px solid transparent",
                 paddingBottom: "2px",
                 background: "none",
                 border: "none",
-                color: "white",
+                borderBottom:
+                  location.pathname === path
+                    ? `2px solid ${solid || scrolled ? RUST : "rgba(255,255,255,0.9)"}`
+                    : "2px solid transparent",
+                color: solid || scrolled ? BROWN : "white",
                 cursor: "pointer",
               }}
             >
@@ -104,17 +107,22 @@ function Navbar({ solid = false }) {
         {/* Cart icon */}
         <button
           onClick={openCart}
-          className="relative flex items-center p-3 rounded-full hover:bg-white/20 transition-colors"
+          className="relative flex items-center p-2 rounded-full transition-colors"
+          style={{
+            background: solid || scrolled ? "rgba(252,231,243,0.72)" : "rgba(255,255,255,0.22)",
+            color: solid || scrolled ? BROWN : "#fff",
+            border: solid || scrolled ? "1px solid rgba(244,114,182,0.28)" : "1px solid rgba(255,255,255,0.25)",
+          }}
         >
-          <FiShoppingCart size={22} />
+          <FiShoppingCart size={20} />
           {totalItems > 0 && (
             <span
               style={{
                 position: "absolute",
-                top: "4px",
-                right: "4px",
-                background: "#fff",
-                color: RUST,
+                top: "-1px",
+                right: "-1px",
+                background: solid || scrolled ? RUST : "#fff",
+                color: solid || scrolled ? "#fff" : RUST,
                 borderRadius: "999px",
                 fontSize: "10px",
                 fontWeight: "800",

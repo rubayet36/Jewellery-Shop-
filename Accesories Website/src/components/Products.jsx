@@ -3,10 +3,9 @@ import { supabase } from "../utils/supabase";
 import { FiHeart } from "react-icons/fi";
 import ProductModal from "./ProductModal";
 
-const BROWN = "#752700";
-const RUST = "#a44f31";
-const BEIGE = "#f3e0d0";
-const LIGHT = "#fdf6f0";
+const BROWN = "#831843";
+const RUST = "#db2777";
+const BEIGE = "#ffe4ef";
 
 function Products({
   products: propProducts,
@@ -88,9 +87,9 @@ function Products({
       <div
         style={{
           width: "100%",
-          background: BEIGE,
+          background: "#fff5f8",
           padding: "48px 0",
-          borderRadius: "0 0 20px 20px",
+          borderRadius: "0 0 32px 32px",
         }}
       >
         <div
@@ -106,15 +105,15 @@ function Products({
             }}
           >
             {categoryFilter
-              ? `${categoryFilter}`
+              ? `🌸 ${categoryFilter} 🌸`
               : showSaleOnly
-                ? "🏷️ On Sale"
-                : "Our Products"}
+                ? "Sparkly Sale Picks ✨💖"
+                : "Cotton Candy Picks 🍬✨"}
           </h2>
 
           {list.length === 0 ? (
-            <p style={{ textAlign: "center", color: "#999" }}>
-              No products available.
+            <p style={{ textAlign: "center", color: "#888", fontSize: "16px" }}>
+              Oh no! No cute pieces here right now! 🎀
             </p>
           ) : (
             <div
@@ -134,27 +133,29 @@ function Products({
                   <div
                     key={product.id}
                     onClick={() => setSelected(product)}
+                    className="bouncy-hover"
                     style={{
                       background: "#fff",
-                      borderRadius: "16px",
-                      boxShadow: "0 4px 20px rgba(117,39,0,0.08)",
+                      borderRadius: "24px",
+                      boxShadow: "0 12px 28px rgba(255,93,143,0.06)",
                       overflow: "hidden",
                       cursor: "pointer",
-                      transition: "transform 0.22s ease, box-shadow 0.22s ease",
                       display: "flex",
                       flexDirection: "column",
-                      border: `1px solid ${BEIGE}`,
+                      border: `3px solid ${BEIGE}`,
                       position: "relative",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-4px)";
+                      e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
                       e.currentTarget.style.boxShadow =
-                        "0 12px 32px rgba(117,39,0,0.15)";
+                        "0 20px 36px rgba(255,93,143,0.18)";
+                      e.currentTarget.style.borderColor = "#ff85a1";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.transform = "translateY(0) scale(1)";
                       e.currentTarget.style.boxShadow =
-                        "0 4px 20px rgba(117,39,0,0.08)";
+                        "0 12px 28px rgba(255,93,143,0.06)";
+                      e.currentTarget.style.borderColor = BEIGE;
                     }}
                   >
                     {product.is_sale && (
@@ -163,17 +164,17 @@ function Products({
                           position: "absolute",
                           top: "12px",
                           left: "12px",
-                          background: "#e74c3c",
+                          background: RUST,
                           color: "#fff",
-                          padding: "3px 10px",
+                          padding: "4px 12px",
                           borderRadius: "999px",
-                          fontSize: "11px",
+                          fontSize: "10px",
                           fontWeight: "800",
                           letterSpacing: "1px",
                           zIndex: 2,
                         }}
                       >
-                        SALE
+                        SALE ✨
                       </div>
                     )}
 
@@ -183,26 +184,26 @@ function Products({
                         style={{
                           position: "absolute",
                           inset: 0,
-                          background: "rgba(0,0,0,0.45)",
+                          background: "rgba(92,61,76,0.35)",
                           zIndex: 3,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          borderRadius: "16px",
+                          borderRadius: "20px",
                         }}
                       >
                         <span
                           style={{
-                            background: "rgba(0,0,0,0.75)",
+                            background: "rgba(92,61,76,0.9)",
                             color: "#fff",
                             padding: "8px 18px",
                             borderRadius: "999px",
-                            fontSize: "13px",
+                            fontSize: "12px",
                             fontWeight: "800",
                             letterSpacing: "1px",
                           }}
                         >
-                          OUT OF STOCK
+                          SOLD OUT 🧸
                         </span>
                       </div>
                     )}
@@ -215,7 +216,7 @@ function Products({
                         top: "10px",
                         right: "10px",
                         zIndex: 2,
-                        background: "rgba(255,255,255,0.9)",
+                        background: "rgba(255,250,253,0.94)",
                         border: "none",
                         borderRadius: "999px",
                         width: "32px",
@@ -224,13 +225,14 @@ function Products({
                         alignItems: "center",
                         justifyContent: "center",
                         cursor: "pointer",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                        boxShadow: "0 8px 18px rgba(255,93,143,0.12)",
                       }}
                     >
                       <FiHeart
                         size={15}
                         fill={isWished ? "#e74c3c" : "none"}
-                        stroke={isWished ? "#e74c3c" : "#888"}
+                        stroke={isWished ? "#e74c3c" : RUST}
+                        style={{ transition: "transform 0.2s" }}
                       />
                     </button>
 
@@ -238,7 +240,7 @@ function Products({
                     <div
                       style={{
                         height: "200px",
-                        background: LIGHT,
+                        background: "#ffeef2",
                         overflow: "hidden",
                       }}
                     >
@@ -250,10 +252,10 @@ function Products({
                             width: "100%",
                             height: "100%",
                             objectFit: "cover",
-                            transition: "transform 0.4s ease",
+                            transition: "transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
                           }}
                           onMouseEnter={(e) =>
-                            (e.currentTarget.style.transform = "scale(1.06)")
+                            (e.currentTarget.style.transform = "scale(1.08)")
                           }
                           onMouseLeave={(e) =>
                             (e.currentTarget.style.transform = "scale(1)")
@@ -267,7 +269,7 @@ function Products({
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            fontSize: "40px",
+                            fontSize: "44px",
                           }}
                         >
                           💍
@@ -278,7 +280,7 @@ function Products({
                     {/* Info */}
                     <div
                       style={{
-                        padding: "16px",
+                        padding: "18px",
                         display: "flex",
                         flexDirection: "column",
                         flex: 1,
@@ -287,8 +289,8 @@ function Products({
                       <p
                         style={{
                           margin: "0 0 4px",
-                          fontSize: "11px",
-                          fontWeight: "700",
+                          fontSize: "10px",
+                          fontWeight: "800",
                           color: RUST,
                           letterSpacing: "1px",
                           textTransform: "uppercase",
@@ -298,7 +300,7 @@ function Products({
                       </p>
                       <h3
                         style={{
-                          margin: "0 0 8px",
+                          margin: "0 0 6px",
                           fontSize: "15px",
                           fontWeight: "700",
                           color: BROWN,
@@ -311,7 +313,7 @@ function Products({
                         style={{
                           margin: "0 0 12px",
                           fontSize: "12px",
-                          color: "#888",
+                          color: "#6c5a62",
                           lineHeight: 1.5,
                           display: "-webkit-box",
                           WebkitLineClamp: 2,
@@ -330,7 +332,7 @@ function Products({
                           alignItems: "center",
                           justifyContent: "space-between",
                           paddingTop: "12px",
-                          borderTop: `1px solid ${BEIGE}`,
+                          borderTop: `1.5px solid ${BEIGE}`,
                         }}
                       >
                         <div>
@@ -347,7 +349,7 @@ function Products({
                             <span
                               style={{
                                 fontSize: "12px",
-                                color: "#bbb",
+                                color: "#ccc",
                                 textDecoration: "line-through",
                                 marginLeft: "6px",
                               }}
@@ -362,22 +364,24 @@ function Products({
                             if (product.stock !== 0) setSelected(product);
                           }}
                           disabled={product.stock === 0}
+                          className="cute-bubble-btn"
                           style={{
                             background:
                               product.stock === 0
                                 ? "#ccc"
-                                : `linear-gradient(135deg, ${BROWN}, ${RUST})`,
+                                : RUST,
                             color: "#fff",
                             border: "none",
-                            borderRadius: "8px",
-                            padding: "8px 14px",
+                            borderRadius: "999px",
+                            padding: "8px 16px",
                             fontSize: "12px",
                             fontWeight: "700",
                             cursor:
                               product.stock === 0 ? "not-allowed" : "pointer",
+                            boxShadow: product.stock === 0 ? "none" : "0 6px 14px rgba(255,93,143,0.18)",
                           }}
                         >
-                          {product.stock === 0 ? "Unavailable" : "View Details"}
+                          {product.stock === 0 ? "Sold Out" : "View Details ✨"}
                         </button>
                       </div>
                     </div>

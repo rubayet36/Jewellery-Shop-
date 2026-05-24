@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar";
 import Hero from "../components/Hero";
-import CategoryBox from "../components/Categorybox";
 import Footer from "../components/Footers";
 import Features from "../components/Features";
 import Product from "../components/Products"
@@ -11,10 +10,10 @@ function LandingPage() {
 
   // filterKey must EXACTLY match the category name stored in your Supabase DB
   const categories = [
-    { image: "/ring.jpg",      name: "Rings",     filterKey: "Ring" },
-    { image: "/neckless.jpg",  name: "Necklaces", filterKey: "Neckless" },
-    { image: "/bracelts.jpg",  name: "Bracelets", filterKey: "Brcelets" },
-    { image: "/earerings.jpg", name: "Earrings",  filterKey: "Earings" },
+    { image: "/ring.jpg",      name: "Rings",     filterKey: "Rings" },
+    { image: "/neckless.jpg",  name: "Necklaces", filterKey: "Necklaces" },
+    { image: "/bracelts.jpg",  name: "Bracelets", filterKey: "Bracelets" },
+    { image: "/earerings.jpg", name: "Earrings",  filterKey: "Earrings" },
   ];
 
   const handleCategorySelect = (filterKey) => {
@@ -25,7 +24,7 @@ function LandingPage() {
   };
 
   return (
-    <div className="bg-brand-brown">
+    <div className="soft-pink-surface">
       <Navbar />
       <Hero />
       <Features categories={categories} activeCategory={activeCategory} onSelect={handleCategorySelect} />

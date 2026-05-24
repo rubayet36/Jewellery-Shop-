@@ -2,9 +2,12 @@ import CategoryBox from "./Categorybox";
 
 function Features({ categories, activeCategory = "", onSelect }) {
   return (
-    <section id="features" className="py-16 bg-white rounded-t-2xl">
-      <h2 className="text-3xl font-serif text-center mb-4 uppercase tracking-widest text-brand-brown">
-        Shop By Category
+    <section id="features" className="py-16 bg-[#fffafd] rounded-t-[32px]">
+      <p className="text-center text-xs font-bold uppercase tracking-[0.28em] text-[#db2777] mb-3 cute-floating">
+        🌸 Curated with love 🌸
+      </p>
+      <h2 className="text-3xl md:text-4xl font-serif text-center mb-4 uppercase tracking-widest text-brand-brown">
+        Shop By Category 🧸
       </h2>
 
       {activeCategory && (
@@ -13,7 +16,7 @@ function Features({ categories, activeCategory = "", onSelect }) {
           <button
             onClick={() => onSelect(activeCategory)}
             style={{
-              color: "#a44f31",
+              color: "#db2777",
               fontWeight: "700",
               background: "none",
               border: "none",

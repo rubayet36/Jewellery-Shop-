@@ -205,7 +205,7 @@ export default function OverviewTab() {
               whiteSpace: "nowrap",
               background: syncing
                 ? "#ccc"
-                : `linear-gradient(135deg, ${BROWN}, ${RUST})`,
+                : BROWN,
               color: "#fff",
             }}
           >

@@ -1,9 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --color-brand-brown: #752700;
-  --color-brand-beige: #f3e0d0;
-  --color-brand-rust: #a44f31;
+  --color-brand-brown: #831843;
+  --color-brand-beige: #ffeef2;
+  --color-brand-rust: #ff5d8f;
+  --color-brand-blush: #ffccd5;
+  --color-brand-rose: #ff85a1;
+  --color-brand-plum: #800e35;
+  --color-brand-cream: #fff5f8;
 }
 
 @keyframes toastIn {
@@ -21,6 +25,11 @@
   to   { opacity: 1; }
 }
 
+@keyframes floatCute {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
 .text-brand-brown {
   color: var(--color-brand-brown);
 }
@@ -35,4 +44,31 @@
 
 .text-brand-rust {
   color: var(--color-brand-rust);
+}
+
+.bg-brand-cream {
+  background-color: var(--color-brand-cream);
+}
+
+.soft-pink-surface {
+  background-color: var(--color-brand-cream);
+}
+
+.bouncy-hover {
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.3s ease;
+}
+
+.cute-floating {
+  animation: floatCute 4s ease-in-out infinite;
+}
+
+.cute-bubble-btn {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.cute-bubble-btn:hover {
+  transform: scale(1.07);
+  box-shadow: 0 12px 28px rgba(255, 93, 143, 0.25);
+}
+.cute-bubble-btn:active {
+  transform: scale(0.95);
 }

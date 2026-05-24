@@ -42,20 +42,20 @@ export default function CartDrawer({ onCheckout }) {
           right: 0,
           width: "380px",
           height: "100vh",
-          background: "#fff",
+          background: "#fffafd",
           zIndex: 9998,
           transform: isOpen ? "translateX(0)" : "translateX(100%)",
           transition: "transform 0.35s cubic-bezier(0.34,1.1,0.64,1)",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "-8px 0 40px rgba(0,0,0,0.15)",
+          boxShadow: "-12px 0 44px rgba(157,23,77,0.2)",
         }}
       >
         {/* Header */}
         <div
           style={{
             padding: "18px 24px",
-            background: RUST,
+            background: BROWN,
             color: "#fff",
             display: "flex",
             alignItems: "center",
@@ -133,7 +133,7 @@ export default function CartDrawer({ onCheckout }) {
                       gap: "12px",
                       padding: "12px",
                       background: LIGHT,
-                      borderRadius: "12px",
+                      borderRadius: "8px",
                       border: `1px solid ${BEIGE}`,
                     }}
                   >
@@ -291,10 +291,10 @@ export default function CartDrawer({ onCheckout }) {
               style={{
                 width: "100%",
                 padding: "13px",
-                background: `linear-gradient(135deg, ${BROWN}, ${RUST})`,
+                background: RUST,
                 color: "#fff",
                 border: "none",
-                borderRadius: "12px",
+                borderRadius: "999px",
                 fontSize: "14px",
                 fontWeight: "700",
                 cursor: "pointer",
