@@ -65,8 +65,8 @@ function Navbar({ solid = false }) {
           color: solid || scrolled ? BROWN : "#fff",
           backdropFilter: "blur(18px)",
           transition: solid
-             ? "none"
-             : "background-color 0.4s ease, box-shadow 0.4s ease, color 0.4s ease",
+            ? "none"
+            : "background-color 0.4s ease, box-shadow 0.4s ease, color 0.4s ease",
           borderBottom: solid || scrolled ? "1px solid rgba(244,114,182,0.22)" : "1px solid rgba(255,255,255,0.22)",
           borderRadius: solid
             ? "0 0 24px 24px"
@@ -77,7 +77,7 @@ function Navbar({ solid = false }) {
       >
         {/* Logo */}
         <div className="cursor-pointer" onClick={() => navigate("/")}>
-          <img src="/logo.png" alt="Logo" className="h-14 md:h-16 w-auto" />
+          <img src="/logo.png" alt="Logo" className="h-14 md:h-12 w-auto" />
         </div>
 
         {/* Nav links */}

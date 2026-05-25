@@ -17,6 +17,7 @@ export default function ProductsTab() {
     buying_price: "",
     description: "",
     image_url: "",
+    additional_images: "",
     design: "",
     stock: 0,
     colors: "",
@@ -61,6 +62,7 @@ export default function ProductsTab() {
       buying_price: form.buying_price ? Number(form.buying_price) : null,
       description: form.description,
       image_url: form.image_url,
+      additional_images: form.additional_images || "",
       design: form.design,
       stock: Number(form.stock),
       colors: colorsArray,
@@ -88,6 +90,7 @@ export default function ProductsTab() {
       buying_price: p.buying_price || "",
       description: p.description || "",
       image_url: p.image_url || "",
+      additional_images: p.additional_images || "",
       design: p.design || "",
       stock: p.stock || 0,
       colors: Array.isArray(p.colors) ? p.colors.join(", ") : "",
@@ -288,6 +291,13 @@ export default function ProductsTab() {
             value={form.image_url}
             onChange={(e) => setForm({ ...form, image_url: e.target.value })}
             style={inputStyle}
+          />
+          <textarea
+            placeholder="Additional Image URLs (comma separated)"
+            rows="2"
+            value={form.additional_images || ""}
+            onChange={(e) => setForm({ ...form, additional_images: e.target.value })}
+            style={{ ...inputStyle, resize: "vertical" }}
           />
           <input
             placeholder="Design / Brand"

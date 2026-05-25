@@ -9,7 +9,7 @@ import { RUST, BROWN, BEIGE, LIGHT } from "./navbarConstants";
 // Supabase, decrements product stock, then reloads the page so stock is fresh.
 export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDhaka }) {
   const { cartItems, totalPrice, clearCart } = useCart();
-  const [form, setForm] = useState({ name: "", phone: "", address: "" });
+  const [form, setForm] = useState({ name: "", phone: "", address: "", transaction_id: "" });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -58,6 +58,50 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
     }
   };
 
+  const sendTelegramNotification = async (orderPayload) => {
+    // 🌸 Paste your free Telegram Bot credentials here
+    const BOT_TOKEN = "8903255568:AAHX0b2uxjtrRiHO7_A9q8-fBnjh2nBc3Ts"; // User's Telegram Bot Token
+    const CHAT_ID = "8646993462";   // User's Telegram Chat ID
+
+    if (!BOT_TOKEN || !CHAT_ID) {
+      console.log("🌸 Telegram Alert: Telegram Bot credentials are not configured inside CheckoutModal.jsx yet! Set BOT_TOKEN and CHAT_ID to receive instant push alerts on Telegram! 🧸💖");
+      return;
+    }
+
+    try {
+      const itemsSummary = orderPayload.items
+        .map((item) => `• ${item.name} ${item.color ? `(${item.color})` : ""} × ${item.qty} (৳${(item.price * item.qty).toFixed(0)})`)
+        .join("\n");
+
+      const txSummary = orderPayload.transaction_id 
+        ? `\n🔑 *Transaction ID:* \`${orderPayload.transaction_id}\``
+        : "";
+
+      const text = `🛍️ *New Order Placed!* 🧸\n\n` +
+        `👤 *Customer:* ${orderPayload.customer_name}\n` +
+        `📞 *Phone:* \`${orderPayload.customer_phone}\`\n` +
+        `📍 *Address:* ${orderPayload.delivery_address}\n` +
+        `🚚 *Shipping:* ${isOutsideDhaka ? "Outside Dhaka (৳150)" : "Inside Dhaka (৳80)"}\n` +
+        txSummary + `\n\n` +
+        `📦 *Items:* \n${itemsSummary}\n\n` +
+        `💳 *Product Price Subtotal:* ৳${orderPayload.total}\n` +
+        `💰 *Grand Total Due:* ৳${orderPayload.total + orderPayload.delivery_charge}`;
+
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: text,
+          parse_mode: "Markdown",
+        }),
+      });
+      console.log("📬 Telegram notification sent successfully!");
+    } catch (err) {
+      console.error("Error triggering Telegram notification:", err);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -70,6 +114,7 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
         delivery_charge: deliveryCharge, // Custom shipping column
         is_outside_dhaka: isOutsideDhaka, // Custom shipping region
         status: "pending",
+        transaction_id: isOutsideDhaka ? form.transaction_id.trim() : "", // saved only if outside Dhaka
         items: cartItems.map((i) => ({
           id: i.id,
           name: i.name,
@@ -82,8 +127,9 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
       const { error } = await supabase.from("orders").insert([orderPayload]);
       if (error) throw error;
 
-      // Trigger Email Alert
+      // Trigger Email & Telegram Alerts
       await sendGmailNotification(orderPayload);
+      await sendTelegramNotification(orderPayload);
 
       // Decrement stock for each purchased product
       await Promise.all(
@@ -97,7 +143,7 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
       localStorage.removeItem("jewel_cart");
       clearCart();
       setSuccess(true);
-      setForm({ name: "", phone: "", address: "" });
+      setForm({ name: "", phone: "", address: "", transaction_id: "" });
       // Reload after 2.5s so updated stock is applied across the page
       setTimeout(() => window.location.reload(), 2500);
     } catch (err) {
@@ -180,19 +226,70 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
                     background: "#fff0f3",
                     border: "2px dashed #ff85a1",
                     borderRadius: "14px",
-                    padding: "12px 16px",
+                    padding: "14px 16px",
                     fontSize: "13px",
                     color: BROWN,
                     lineHeight: "1.5",
                     textAlign: "left",
                   }}
                 >
-                  🌸 <strong>Advance Payment Notice:</strong> For orders outside Dhaka, an advance delivery charge of <strong>৳150</strong> is required to confirm the shipment. Our team will contact you shortly to guide you through the payment. Thank you! 🧸💖
+                  🌸 <strong>Advance Payment Required:</strong> For orders outside Dhaka, please send the <strong>৳150 bkash send money</strong> delivery charge to the number below to confirm your order. After sending, enter your Transaction ID! 🧸💖
+                  
+                  <div
+                    style={{
+                      marginTop: "10px",
+                      background: "#fff",
+                      border: "1.5px solid #ffccd5",
+                      borderRadius: "10px",
+                      padding: "8px 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      boxShadow: "0 2px 8px rgba(255,93,143,0.04)"
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontSize: "10px", color: RUST, fontWeight: "800", display: "block", letterSpacing: "0.5px" }}>BKASH </span>
+                      <strong style={{ fontSize: "16px", color: BROWN, fontFamily: "monospace", letterSpacing: "0.5px" }}>01339659572</strong>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigator.clipboard.writeText("01339659572");
+                        alert("Number copied! 📋🌸");
+                      }}
+                      style={{
+                        background: RUST,
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "8px",
+                        padding: "6px 14px",
+                        fontSize: "11px",
+                        fontWeight: "800",
+                        cursor: "pointer",
+                        boxShadow: "0 4px 10px rgba(219,39,119,0.15)"
+                      }}
+                    >
+                      Copy 📋
+                    </button>
+                  </div>
                 </div>
               )}
               {field("CUSTOMER NAME *", <input required type="text" placeholder="Your full name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputCss} />)}
               {field("PHONE NUMBER *",  <input required type="tel"  placeholder="e.g. 01XXXXXXXXX"  value={form.phone}   onChange={e => setForm({ ...form, phone: e.target.value })}   style={inputCss} />)}
               {field("DELIVERY ADDRESS *", <textarea required rows={3} placeholder="House, Road, Area, City" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} style={{ ...inputCss, resize: "vertical", fontFamily: "inherit" }} />)}
+              {isOutsideDhaka && field(
+                "TRANSACTION ID *",
+                <input
+                  required
+                  type="text"
+                  placeholder="Enter bKash/Nagad Transaction ID"
+                  value={form.transaction_id}
+                  onChange={e => setForm({ ...form, transaction_id: e.target.value })}
+                  style={inputCss}
+                />
+              )}
 
               <button
                 type="submit" disabled={loading}

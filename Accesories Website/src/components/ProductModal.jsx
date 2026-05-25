@@ -12,11 +12,14 @@ export default function ProductModal({ product, onClose }) {
   const [selectedColor, setSelectedColor] = useState("");
   const [qty, setQty] = useState(1);
   const [wishlisted, setWishlisted] = useState(false);
+  const [activeImage, setActiveImage] = useState("");
+  const [isZoomed, setIsZoomed] = useState(false);
   const { addToCart } = useCart();
   const { toast } = useToast();
 
   useEffect(() => {
     if (!product) return;
+    setActiveImage(product.image_url || "");
     if (product.colors?.length > 0) setSelectedColor(product.colors[0]);
     // Check wishlist
     const wl = JSON.parse(localStorage.getItem("jewel_wishlist") || "[]");
@@ -41,6 +44,15 @@ export default function ProductModal({ product, onClose }) {
     product.is_sale && product.sale_price
       ? Number(product.sale_price)
       : Number(product.price);
+
+  const allImages = [
+    product.image_url,
+    ...(Array.isArray(product.additional_images)
+      ? product.additional_images
+      : product.additional_images
+        ? product.additional_images.split(",").map((img) => img.trim()).filter(Boolean)
+        : []),
+  ].filter(Boolean);
 
   const handleAddToCart = () => {
     addToCart(product, selectedColor, qty);
@@ -96,13 +108,15 @@ export default function ProductModal({ product, onClose }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Image */}
+        {/* Image Column */}
         <div
           style={{
             width: "42%",
             flexShrink: 0,
             background: "#ffeef2",
             position: "relative",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           {product.is_sale && (
@@ -118,30 +132,78 @@ export default function ProductModal({ product, onClose }) {
                 fontSize: "11px",
                 fontWeight: "800",
                 letterSpacing: "1px",
-                zIndex: 1,
+                zIndex: 15,
               }}
             >
               SALE
             </div>
           )}
-          {product.image_url ? (
-            <img
-              src={product.image_url}
-              alt={product.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
+          <div style={{ flex: 1, position: "relative", overflow: "hidden", minHeight: "260px" }}>
+            {activeImage ? (
+              <img
+                src={activeImage}
+                alt={product.name}
+                onClick={() => setIsZoomed(true)}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  cursor: "zoom-in",
+                  transition: "transform 0.3s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+              />
+            ) : (
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "56px",
+                }}
+              >
+                💍
+              </div>
+            )}
+          </div>
+
+          {/* Gallery Row */}
+          {allImages.length > 1 && (
             <div
               style={{
-                width: "100%",
-                height: "300px",
                 display: "flex",
-                alignItems: "center",
+                gap: "8px",
+                padding: "10px",
+                overflowX: "auto",
+                background: "rgba(255, 255, 255, 0.9)",
+                borderTop: "1.5px solid #ffeef2",
+                boxSizing: "border-box",
                 justifyContent: "center",
-                fontSize: "56px",
               }}
             >
-              💍
+              {allImages.map((img, idx) => (
+                <img
+                  key={idx}
+                  src={img}
+                  alt=""
+                  onClick={() => setActiveImage(img)}
+                  style={{
+                    width: "44px",
+                    height: "44px",
+                    objectFit: "cover",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    border: activeImage === img ? `2px solid ${RUST}` : "2px solid transparent",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.08)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -417,6 +479,61 @@ export default function ProductModal({ product, onClose }) {
           </div>
         </div>
       </div>
+
+      {/* Zoomed Lightbox */}
+      {isZoomed && activeImage && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.9)",
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "zoom-out",
+            animation: "fadeIn 0.2s ease",
+          }}
+          onClick={() => setIsZoomed(false)}
+        >
+          <style>{`@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`}</style>
+          <button
+            onClick={() => setIsZoomed(false)}
+            style={{
+              position: "absolute",
+              top: "24px",
+              right: "24px",
+              background: "rgba(255,255,255,0.2)",
+              border: "none",
+              color: "#fff",
+              borderRadius: "50%",
+              width: "44px",
+              height: "44px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              fontSize: "20px",
+              fontWeight: "bold",
+            }}
+          >
+            ✕
+          </button>
+          <img
+            src={activeImage}
+            alt={product.name}
+            style={{
+              maxWidth: "92vw",
+              maxHeight: "92vh",
+              objectFit: "contain",
+              borderRadius: "12px",
+              boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
+              animation: "scaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) ease",
+            }}
+          />
+          <style>{`@keyframes scaleUp { from { transform: scale(0.9); } to { transform: scale(1); } }`}</style>
+        </div>
+      )}
     </div>
   );
 }
