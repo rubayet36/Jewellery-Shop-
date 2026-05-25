@@ -16,48 +16,6 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
   const deliveryCharge = isOutsideDhaka ? 150 : 80;
   const grandTotal = totalPrice + deliveryCharge;
 
-  const sendGmailNotification = async (orderPayload) => {
-    // 🌸 Configure your free EmailJS account variables here (Gmail Integration)
-    const SERVICE_ID = "service_9u2mvd7";       // Your EmailJS Service ID
-    const TEMPLATE_ID = "template_u2r84la";     // Your EmailJS Template ID
-    const PUBLIC_KEY = "8521LBhipI56HjJ1d";     // Your EmailJS Public Key
-
-    if (!PUBLIC_KEY || PUBLIC_KEY === "YOUR_EMAILJS_PUBLIC_KEY") {
-      console.log("🌸 Gmail Alert: EmailJS is not configured yet! Register at emailjs.com and set SERVICE_ID, TEMPLATE_ID, and PUBLIC_KEY inside CheckoutModal.jsx to receive instant Gmail notifications! 🧸💖");
-      return;
-    }
-
-    try {
-      const itemsSummary = orderPayload.items
-        .map((item) => `• ${item.name} ${item.color ? `(${item.color})` : ""} × ${item.qty} (৳${(item.price * item.qty).toFixed(0)})`)
-        .join("\n");
-
-      await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          service_id: SERVICE_ID,
-          template_id: TEMPLATE_ID,
-          user_id: PUBLIC_KEY,
-          template_params: {
-            customer_name: orderPayload.customer_name,
-            customer_phone: orderPayload.customer_phone,
-            delivery_address: orderPayload.delivery_address,
-            customer_address: orderPayload.delivery_address, // Ensures both variables work!
-            items_summary: itemsSummary,
-            subtotal: `৳${orderPayload.total}`,
-            delivery_charge: `৳${deliveryCharge}`,
-            grand_total: `৳${grandTotal}`,
-            shipping_region: isOutsideDhaka ? "Outside Dhaka" : "Inside Dhaka",
-          },
-        }),
-      });
-      console.log("📬 Gmail notification sent successfully via EmailJS!");
-    } catch (err) {
-      console.error("Error triggering Gmail notification:", err);
-    }
-  };
-
   const sendTelegramNotification = async (orderPayload) => {
     // 🌸 Paste your free Telegram Bot credentials here
     const BOT_TOKEN = "8903255568:AAHX0b2uxjtrRiHO7_A9q8-fBnjh2nBc3Ts"; // User's Telegram Bot Token
@@ -68,34 +26,48 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
       return;
     }
 
+    const escapeHTML = (str) => {
+      if (!str) return "";
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    };
+
     try {
       const itemsSummary = orderPayload.items
-        .map((item) => `• ${item.name} ${item.color ? `(${item.color})` : ""} × ${item.qty} (৳${(item.price * item.qty).toFixed(0)})`)
+        .map((item) => `🌸 ${escapeHTML(item.name)} ${item.color ? `(${escapeHTML(item.color)})` : ""} × ${item.qty} (৳${(item.price * item.qty).toFixed(0)})`)
         .join("\n");
 
       const txSummary = orderPayload.transaction_id 
-        ? `\n🔑 *Transaction ID:* \`${orderPayload.transaction_id}\``
+        ? `\n🔑 <b>Transaction ID:</b> <code>${escapeHTML(orderPayload.transaction_id)}</code>`
         : "";
 
-      const text = `🛍️ *New Order Placed!* 🧸\n\n` +
-        `👤 *Customer:* ${orderPayload.customer_name}\n` +
-        `📞 *Phone:* \`${orderPayload.customer_phone}\`\n` +
-        `📍 *Address:* ${orderPayload.delivery_address}\n` +
-        `🚚 *Shipping:* ${isOutsideDhaka ? "Outside Dhaka (৳150)" : "Inside Dhaka (৳80)"}\n` +
+      const text = `🛍️ <b>New Order Placed!</b> 🧸\n\n` +
+        `👤 <b>Customer:</b> ${escapeHTML(orderPayload.customer_name)}\n` +
+        `📞 <b>Phone:</b> <code>${escapeHTML(orderPayload.customer_phone)}</code>\n` +
+        `📍 <b>Address:</b> ${escapeHTML(orderPayload.delivery_address)}\n` +
+        `🚚 <b>Shipping:</b> ${isOutsideDhaka ? "Outside Dhaka (৳150)" : "Inside Dhaka (৳80)"}\n` +
         txSummary + `\n\n` +
-        `📦 *Items:* \n${itemsSummary}\n\n` +
-        `💳 *Product Price Subtotal:* ৳${orderPayload.total}\n` +
-        `💰 *Grand Total Due:* ৳${orderPayload.total + orderPayload.delivery_charge}`;
+        `📦 <b>Items:</b> \n${itemsSummary}\n\n` +
+        `💳 <b>Product Price Subtotal:</b> ৳${orderPayload.total}\n` +
+        `💰 <b>Grand Total Due:</b> ৳${orderPayload.total + orderPayload.delivery_charge}`;
 
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: CHAT_ID,
           text: text,
-          parse_mode: "Markdown",
+          parse_mode: "HTML",
         }),
       });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText);
+      }
+
       console.log("📬 Telegram notification sent successfully!");
     } catch (err) {
       console.error("Error triggering Telegram notification:", err);
@@ -127,8 +99,7 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
       const { error } = await supabase.from("orders").insert([orderPayload]);
       if (error) throw error;
 
-      // Trigger Email & Telegram Alerts
-      await sendGmailNotification(orderPayload);
+      // Trigger Telegram Alert
       await sendTelegramNotification(orderPayload);
 
       // Decrement stock for each purchased product
