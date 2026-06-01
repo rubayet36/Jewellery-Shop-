@@ -7,12 +7,31 @@ import { BROWN, RUST, thStyle, tdStyle } from "./adminConstants";
 // Click any row to expand and see full item details, address, and phone.
 export default function TransactionsTab() {
   const [orders, setOrders] = useState([]);
+  const [productsMap, setProductsMap] = useState({});
   const [view, setView] = useState("pending"); // "pending" | "delivered"
   const [expanded, setExpanded] = useState(null);
 
   useEffect(() => {
     fetchOrders();
+    fetchProductsMap();
   }, []);
+
+  async function fetchProductsMap() {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, image_url");
+      if (!error && data) {
+        const mapping = {};
+        data.forEach((p) => {
+          mapping[p.id] = p.image_url;
+        });
+        setProductsMap(mapping);
+      }
+    } catch (e) {
+      console.log("Error fetching products map:", e);
+    }
+  }
 
   async function fetchOrders() {
     try {
@@ -215,41 +234,77 @@ export default function TransactionsTab() {
                 Order Items
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                {(o.items || []).map((item, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      background: "#fff",
-                      border: "1px solid #eaeaea",
-                      borderRadius: "8px",
-                      padding: "8px 12px",
-                      fontSize: "13px",
-                    }}
-                  >
-                    <span style={{ fontWeight: "700", color: BROWN }}>
-                      {item.name}
-                    </span>
-                    {item.color && (
-                      <span style={{ color: "#999", marginLeft: "6px" }}>
-                        ({item.color})
-                      </span>
-                    )}
-                    <span style={{ color: "#555", marginLeft: "8px" }}>
-                      × {item.qty}
-                    </span>
-                    <span
+                {(o.items || []).map((item, idx) => {
+                  const imgUrl = item.image_url || productsMap[item.id];
+                  return (
+                    <div
+                      key={idx}
                       style={{
-                        fontWeight: "700",
-                        color: RUST,
-                        marginLeft: "8px",
+                        background: "#fff",
+                        border: "1px solid #ffccd5",
+                        borderRadius: "12px",
+                        padding: "8px 12px",
+                        fontSize: "13px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        boxShadow: "0 2px 6px rgba(255,93,143,0.02)",
+                        minWidth: "220px",
+                        flex: "1 1 calc(33.33% - 8px)",
+                        boxSizing: "border-box",
                       }}
                     >
-                      ৳{(item.price * item.qty).toFixed(0)}
-                    </span>
-                  </div>
-                ))}
+                      <div
+                        style={{
+                          width: "48px",
+                          height: "48px",
+                          borderRadius: "8px",
+                          overflow: "hidden",
+                          background: "#fff5f8",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "1px solid #ffccd5",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {imgUrl ? (
+                          <img
+                            src={imgUrl}
+                            alt={item.name}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: "20px" }}>💍</span>
+                        )}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: "700", color: BROWN, lineHeight: "1.2" }}>
+                          {item.name}
+                          {item.color && (
+                            <span style={{ color: "#999", fontSize: "11px", marginLeft: "4px" }}>
+                              ({item.color})
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", gap: "10px", marginTop: "4px", fontSize: "12px" }}>
+                          <span style={{ color: "#666" }}>
+                            Qty: <strong style={{ color: BROWN }}>{item.qty}</strong>
+                          </span>
+                          <span style={{ fontWeight: "700", color: RUST }}>
+                            ৳{(item.price * item.qty).toFixed(0)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <div style={{ marginTop: "12px", display: "flex", flexWrap: "wrap", gap: "24px", fontSize: "13px", background: "#fff9fb", border: "1px dashed #ffccd5", borderRadius: "12px", padding: "10px 16px" }}>
+              <div style={{ marginTop: "12px", display: "flex", flexWrap: "wrap", gap: "24px", fontSize: "13px", background: "#fff9fb", border: "1px dashed #ffccd5", borderRadius: "12px", padding: "10px 16px", alignItems: "center" }}>
                 <div>
                   <span style={{ color: "#888" }}>Product Revenue: </span>
                   <span style={{ fontWeight: "700", color: BROWN }}>৳{o.total}</span>
@@ -264,6 +319,34 @@ export default function TransactionsTab() {
                   <span style={{ color: "#888" }}>Grand Total: </span>
                   <span style={{ fontWeight: "800", color: RUST }}>৳{Number(o.total || 0) + Number(o.delivery_charge || 80)}</span>
                 </div>
+                {o.transaction_id && (
+                  <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ color: "#888", fontWeight: "700" }}>🔑 TxID:</span>
+                    <span
+                      onClick={() => {
+                        navigator.clipboard.writeText(o.transaction_id);
+                        alert("Transaction ID copied! 📋💖");
+                      }}
+                      style={{
+                        background: "#fff",
+                        border: "1.5px solid #ffccd5",
+                        color: BROWN,
+                        padding: "4px 10px",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                        fontFamily: "monospace",
+                        fontWeight: "800",
+                        cursor: "pointer",
+                        boxShadow: "0 2px 5px rgba(255,93,143,0.03)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                      }}
+                      title="Click to copy Transaction ID"
+                    >
+                      {o.transaction_id} 📋
+                    </span>
+                  </div>
+                )}
               </div>
               <p style={{ margin: "12px 0 0", fontSize: "12px", color: "#888" }}>
                 📍 {o.delivery_address || "No address"} &nbsp;|&nbsp; 📞{" "}

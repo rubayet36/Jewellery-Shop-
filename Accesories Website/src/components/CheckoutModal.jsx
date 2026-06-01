@@ -86,13 +86,14 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
         delivery_charge: deliveryCharge, // Custom shipping column
         is_outside_dhaka: isOutsideDhaka, // Custom shipping region
         status: "pending",
-        transaction_id: isOutsideDhaka ? form.transaction_id.trim() : "", // saved only if outside Dhaka
+        transaction_id: form.transaction_id.trim(), // saved universally for all shipping options
         items: cartItems.map((i) => ({
           id: i.id,
           name: i.name,
           qty: i.qty,
           color: i.color,
           price: i.is_sale && i.sale_price ? Number(i.sale_price) : Number(i.price),
+          image_url: i.image_url || "", // saved to support admin details previews
         })),
       };
 
@@ -191,66 +192,64 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
                 </div>
               </div>
 
-              {isOutsideDhaka && (
+              <div
+                style={{
+                  background: "#fff0f3",
+                  border: "2px dashed #ff85a1",
+                  borderRadius: "14px",
+                  padding: "14px 16px",
+                  fontSize: "13px",
+                  color: BROWN,
+                  lineHeight: "1.5",
+                  textAlign: "left",
+                }}
+              >
+                🌸 <strong>Advance Payment Required:</strong> Please send the <strong>৳{deliveryCharge} bkash send money</strong> delivery charge to the number below to confirm your order ({isOutsideDhaka ? "Outside Dhaka" : "Inside Dhaka"}). After sending, enter your Transaction ID! 🧸💖
+                
                 <div
                   style={{
-                    background: "#fff0f3",
-                    border: "2px dashed #ff85a1",
-                    borderRadius: "14px",
-                    padding: "14px 16px",
-                    fontSize: "13px",
-                    color: BROWN,
-                    lineHeight: "1.5",
-                    textAlign: "left",
+                    marginTop: "10px",
+                    background: "#fff",
+                    border: "1.5px solid #ffccd5",
+                    borderRadius: "10px",
+                    padding: "8px 12px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    boxShadow: "0 2px 8px rgba(255,93,143,0.04)"
                   }}
                 >
-                  🌸 <strong>Advance Payment Required:</strong> For orders outside Dhaka, please send the <strong>৳150 bkash send money</strong> delivery charge to the number below to confirm your order. After sending, enter your Transaction ID! 🧸💖
-                  
-                  <div
+                  <div>
+                    <span style={{ fontSize: "10px", color: RUST, fontWeight: "800", display: "block", letterSpacing: "0.5px" }}>BKASH </span>
+                    <strong style={{ fontSize: "16px", color: BROWN, fontFamily: "monospace", letterSpacing: "0.5px" }}>01339659572</strong>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigator.clipboard.writeText("01339659572");
+                      alert("Number copied! 📋🌸");
+                    }}
                     style={{
-                      marginTop: "10px",
-                      background: "#fff",
-                      border: "1.5px solid #ffccd5",
-                      borderRadius: "10px",
-                      padding: "8px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      boxShadow: "0 2px 8px rgba(255,93,143,0.04)"
+                      background: RUST,
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "6px 14px",
+                      fontSize: "11px",
+                      fontWeight: "800",
+                      cursor: "pointer",
+                      boxShadow: "0 4px 10px rgba(219,39,119,0.15)"
                     }}
                   >
-                    <div>
-                      <span style={{ fontSize: "10px", color: RUST, fontWeight: "800", display: "block", letterSpacing: "0.5px" }}>BKASH </span>
-                      <strong style={{ fontSize: "16px", color: BROWN, fontFamily: "monospace", letterSpacing: "0.5px" }}>01339659572</strong>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigator.clipboard.writeText("01339659572");
-                        alert("Number copied! 📋🌸");
-                      }}
-                      style={{
-                        background: RUST,
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "8px",
-                        padding: "6px 14px",
-                        fontSize: "11px",
-                        fontWeight: "800",
-                        cursor: "pointer",
-                        boxShadow: "0 4px 10px rgba(219,39,119,0.15)"
-                      }}
-                    >
-                      Copy 📋
-                    </button>
-                  </div>
+                    Copy 📋
+                  </button>
                 </div>
-              )}
+              </div>
               {field("CUSTOMER NAME *", <input required type="text" placeholder="Your full name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputCss} />)}
               {field("PHONE NUMBER *",  <input required type="tel"  placeholder="e.g. 01XXXXXXXXX"  value={form.phone}   onChange={e => setForm({ ...form, phone: e.target.value })}   style={inputCss} />)}
               {field("DELIVERY ADDRESS *", <textarea required rows={3} placeholder="House, Road, Area, City" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} style={{ ...inputCss, resize: "vertical", fontFamily: "inherit" }} />)}
-              {isOutsideDhaka && field(
+              {field(
                 "TRANSACTION ID *",
                 <input
                   required
