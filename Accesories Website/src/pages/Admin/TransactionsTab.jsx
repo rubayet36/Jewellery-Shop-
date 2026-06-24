@@ -3,51 +3,103 @@ import { supabase } from "../../utils/supabase";
 import { BROWN, RUST, thStyle, tdStyle } from "./adminConstants";
 
 // ── Transactions Tab ──────────────────────────────────────────────────────────
-// Shows all orders split into Pending Orders and Delivered Portal.
+// Shows orders split into Pending Orders and Delivered Portal.
+// Paginates orders database-side (20 per page).
 // Click any row to expand and see full item details, address, and phone.
 export default function TransactionsTab() {
   const [orders, setOrders] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [counts, setCounts] = useState({ pending: 0, delivered: 0 });
   const [productsMap, setProductsMap] = useState({});
   const [view, setView] = useState("pending"); // "pending" | "delivered"
   const [expanded, setExpanded] = useState(null);
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
     fetchOrders();
-    fetchProductsMap();
-  }, []);
+    fetchCounts();
+  }, [view, page]);
 
-  async function fetchProductsMap() {
+  async function fetchCounts() {
     try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, image_url");
-      if (!error && data) {
-        const mapping = {};
-        data.forEach((p) => {
-          mapping[p.id] = p.image_url;
-        });
-        setProductsMap(mapping);
-      }
+      const [{ count: pCount }, { count: dCount }] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("*", { count: "exact", head: true })
+          .neq("status", "delivered"),
+        supabase
+          .from("orders")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "delivered"),
+      ]);
+      setCounts({
+        pending: pCount || 0,
+        delivered: dCount || 0,
+      });
     } catch (e) {
-      console.log("Error fetching products map:", e);
+      console.log("Error fetching counts:", e);
     }
   }
 
   async function fetchOrders() {
+    setLoading(true);
+    const from = page * ITEMS_PER_PAGE;
+    const to = from + ITEMS_PER_PAGE - 1;
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (!error && data) setOrders(data);
+        .select("*", { count: "exact" });
+
+      if (view === "pending") {
+        query = query.neq("status", "delivered");
+      } else {
+        query = query.eq("status", "delivered");
+      }
+
+      query = query.order("created_at", { ascending: false }).range(from, to);
+
+      const { data, count, error } = await query;
+      if (!error && data) {
+        setOrders(data);
+        setTotalCount(count || data.length);
+
+        // Fetch fallback image mapping only for products in this page's orders
+        const productIds = [
+          ...new Set(
+            data
+              .flatMap((o) => (o.items || []).map((item) => item.id))
+              .filter(Boolean)
+          ),
+        ];
+
+        if (productIds.length > 0) {
+          const { data: prodData } = await supabase
+            .from("products")
+            .select("id, image_url")
+            .in("id", productIds);
+          if (prodData) {
+            const mapping = {};
+            prodData.forEach((p) => {
+              mapping[p.id] = p.image_url;
+            });
+            setProductsMap((prev) => ({ ...prev, ...mapping }));
+          }
+        }
+      }
     } catch (e) {
       console.log(e);
+    } finally {
+      setLoading(false);
     }
   }
 
   const updateStatus = async (id, status) => {
     await supabase.from("orders").update({ status }).eq("id", id);
-    setOrders(orders.map((o) => (o.id === id ? { ...o, status } : o)));
+    fetchOrders();
+    fetchCounts();
   };
 
   const deleteOrder = async (id) => {
@@ -56,16 +108,22 @@ export default function TransactionsTab() {
     )
       return;
     await supabase.from("orders").delete().eq("id", id);
-    setOrders((prev) => prev.filter((o) => o.id !== id));
+    fetchOrders();
+    fetchCounts();
   };
 
-  const pending = orders.filter((o) => o.status !== "delivered");
-  const delivered = orders.filter((o) => o.status === "delivered");
-  const list = view === "pending" ? pending : delivered;
+  const list = orders;
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  const changeView = (v) => {
+    setView(v);
+    setPage(0);
+    setExpanded(null);
+  };
 
   const TabBtn = ({ label, val, count }) => (
     <button
-      onClick={() => setView(val)}
+      onClick={() => changeView(val)}
       style={{
         padding: "8px 20px",
         border: "none",
@@ -367,20 +425,24 @@ export default function TransactionsTab() {
           gap: "10px",
           marginBottom: "20px",
           alignItems: "center",
+          flexWrap: "wrap",
         }}
       >
         <TabBtn
-          label="🕐 Pending Orders"
+          label="⏳ Pending Orders"
           val="pending"
-          count={pending.length}
+          count={counts.pending}
         />
         <TabBtn
           label="✅ Delivered Portal"
           val="delivered"
-          count={delivered.length}
+          count={counts.delivered}
         />
         <button
-          onClick={fetchOrders}
+          onClick={() => {
+            fetchOrders();
+            fetchCounts();
+          }}
           style={{
             marginLeft: "auto",
             background: "none",
@@ -396,60 +458,117 @@ export default function TransactionsTab() {
         </button>
       </div>
 
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: "16px",
-          border: "1px solid #eaeaea",
-          overflow: "hidden",
-        }}
-      >
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            textAlign: "left",
-          }}
-        >
-          <thead>
-            <tr
+      {loading && list.length === 0 ? (
+        <div style={{ padding: "60px", textAlign: "center", color: "#aaa" }}>
+          Loading orders... 🌸
+        </div>
+      ) : (
+        <>
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "16px",
+              border: "1px solid #eaeaea",
+              overflowX: "auto",
+            }}
+          >
+            <table
               style={{
-                background: "#fafafa",
-                borderBottom: "1px solid #eaeaea",
+                width: "100%",
+                borderCollapse: "collapse",
+                textAlign: "left",
               }}
             >
-              <th style={thStyle}>Order ID</th>
-              <th style={thStyle}>Customer</th>
-              <th style={thStyle}>Address</th>
-              <th style={thStyle}>Items</th>
-              <th style={thStyle}>Total</th>
-              <th style={thStyle}>Date</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((o) => (
-              <OrderRow key={o.id} o={o} />
-            ))}
-            {list.length === 0 && (
-              <tr>
-                <td
-                  colSpan="7"
+              <thead>
+                <tr
                   style={{
-                    padding: "40px",
-                    textAlign: "center",
-                    color: "#999",
+                    background: "#fafafa",
+                    borderBottom: "1px solid #eaeaea",
                   }}
                 >
-                  {view === "pending"
-                    ? "No pending orders 🎉"
-                    : "No delivered orders yet"}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  <th style={thStyle}>Order ID</th>
+                  <th style={thStyle}>Customer</th>
+                  <th style={thStyle}>Address</th>
+                  <th style={thStyle}>Items</th>
+                  <th style={thStyle}>Total</th>
+                  <th style={thStyle}>Date</th>
+                  <th style={{ ...thStyle, textAlign: "right" }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((o) => (
+                  <OrderRow key={o.id} o={o} />
+                ))}
+                {list.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      style={{
+                        padding: "40px",
+                        textAlign: "center",
+                        color: "#999",
+                      }}
+                    >
+                      {view === "pending"
+                        ? "No pending orders 🎉"
+                        : "No delivered orders yet"}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: "12px",
+                marginTop: "20px",
+                padding: "10px",
+              }}
+            >
+              <button
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(p - 1, 0))}
+                style={{
+                  padding: "6px 12px",
+                  border: "1.5px solid #ddd",
+                  background: page === 0 ? "#f5f5f5" : "#fff",
+                  borderRadius: "8px",
+                  cursor: page === 0 ? "not-allowed" : "pointer",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  color: BROWN,
+                }}
+              >
+                ← Prev
+              </button>
+              <span style={{ fontSize: "13px", fontWeight: "700", color: BROWN }}>
+                Page {page + 1} of {totalPages}
+              </span>
+              <button
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
+                style={{
+                  padding: "6px 12px",
+                  border: "1.5px solid #ddd",
+                  background: page >= totalPages - 1 ? "#f5f5f5" : "#fff",
+                  borderRadius: "8px",
+                  cursor: page >= totalPages - 1 ? "not-allowed" : "pointer",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  color: BROWN,
+                }}
+              >
+                Next →
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

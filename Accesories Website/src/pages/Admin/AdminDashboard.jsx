@@ -25,7 +25,20 @@ const LIGHT = "#fff1f6"; // Soft Rose Tinted
 function AdminDashboard() {
   const [session, setSession] = useState(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem("admin_active_tab") || "overview";
+  });
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    localStorage.setItem("admin_active_tab", activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     // Check initial session
@@ -83,119 +96,204 @@ function AdminDashboard() {
     <div
       style={{
         display: "flex",
+        flexDirection: isMobile ? "column" : "row",
         minHeight: "100vh",
         background: "#fff9fb", // Gorgeous minimal rose tint background
         fontFamily: "system-ui, sans-serif",
       }}
     >
-      {/* ── Sidebar ── */}
-      <aside
-        style={{
-          width: "260px",
-          background: "#fff",
-          borderRight: "1px solid #fce7f3", // Soft pink border line
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div style={{ padding: "24px", borderBottom: "1px solid #fce7f3" }}>
-          <h2
-            style={{
-              margin: 0,
-              color: BROWN,
-              fontSize: "20px",
-              fontWeight: "800",
-            }}
-          >
-            Admin Portal 🧸
-          </h2>
-        </div>
-        <nav
+      {/* ── Sidebar / Top Navigation ── */}
+      {isMobile ? (
+        <header
           style={{
-            padding: "16px",
+            background: "#fff",
+            borderBottom: "1.5px solid #fce7f3",
+            position: "sticky",
+            top: 0,
+            zIndex: 100,
             display: "flex",
             flexDirection: "column",
-            gap: "8px",
           }}
         >
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+          {/* Top Title Bar */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid #fce7f3" }}>
+            <h2 style={{ margin: 0, color: BROWN, fontSize: "17px", fontWeight: "800" }}>
+              Admin Portal 🧸
+            </h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <a
+                href="/"
+                style={{
+                  color: "#888",
+                  textDecoration: "none",
+                  fontSize: "12px",
+                  fontWeight: "700",
+                }}
+              >
+                Store 🛍️
+              </a>
+              <span style={{ color: "#eee" }}>|</span>
+              <button
+                onClick={() => supabase.auth.signOut()}
+                style={{
+                  padding: "5px 10px",
+                  borderRadius: "8px",
+                  border: "1.5px solid #ffccd5",
+                  background: "#fff5f8",
+                  color: "#ff5d8f",
+                  fontWeight: "700",
+                  fontSize: "11px",
+                  cursor: "pointer",
+                }}
+              >
+                Logout 🔒
+              </button>
+            </div>
+          </div>
+          {/* Scrollable Tab Row */}
+          <nav
+            style={{
+              padding: "10px",
+              display: "flex",
+              gap: "6px",
+              overflowX: "auto",
+              whiteSpace: "nowrap",
+              scrollbarWidth: "none",
+            }}
+          >
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  background: activeTab === tab.id ? LIGHT : "transparent",
+                  color: activeTab === tab.id ? RUST : "#555",
+                  fontWeight: activeTab === tab.id ? "700" : "500",
+                  fontSize: "13px",
+                  flexShrink: 0,
+                  transition: "all 0.15s",
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </header>
+      ) : (
+        <aside
+          style={{
+            width: "260px",
+            background: "#fff",
+            borderRight: "1px solid #fce7f3", // Soft pink border line
+            display: "flex",
+            flexDirection: "column",
+            position: "sticky",
+            top: 0,
+            height: "100vh",
+          }}
+        >
+          <div style={{ padding: "24px", borderBottom: "1px solid #fce7f3" }}>
+            <h2
               style={{
-                padding: "12px 16px",
-                borderRadius: "8px",
-                border: "none",
-                cursor: "pointer",
-                background: activeTab === tab.id ? LIGHT : "transparent",
-                color: activeTab === tab.id ? RUST : "#555",
-                fontWeight: activeTab === tab.id ? "700" : "500",
-                textAlign: "left",
-                fontSize: "14px",
-                transition: "all 0.2s",
+                margin: 0,
+                color: BROWN,
+                fontSize: "20px",
+                fontWeight: "800",
               }}
             >
-              {tab.label}
+              Admin Portal 🧸
+            </h2>
+          </div>
+          <nav
+            style={{
+              padding: "16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  background: activeTab === tab.id ? LIGHT : "transparent",
+                  color: activeTab === tab.id ? RUST : "#555",
+                  fontWeight: activeTab === tab.id ? "700" : "500",
+                  textAlign: "left",
+                  fontSize: "14px",
+                  transition: "all 0.2s",
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+          
+          <div
+            style={{
+              marginTop: "auto",
+              padding: "16px",
+              borderTop: "1px solid #fce7f3",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+            }}
+          >
+            <button
+              onClick={() => supabase.auth.signOut()}
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "10px",
+                border: "1.5px solid #ffccd5",
+                background: "#fff5f8",
+                color: "#ff5d8f",
+                fontWeight: "700",
+                fontSize: "13px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#ff5d8f";
+                e.currentTarget.style.color = "#fff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#fff5f8";
+                e.currentTarget.style.color = "#ff5d8f";
+              }}
+            >
+              Sign Out 🔒
             </button>
-          ))}
-        </nav>
-        
-        {/* Sidebar Footer with Logout option */}
-        <div
-          style={{
-            marginTop: "auto",
-            padding: "16px",
-            borderTop: "1px solid #fce7f3",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-          }}
-        >
-          <button
-            onClick={() => supabase.auth.signOut()}
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "10px",
-              border: "1.5px solid #ffccd5",
-              background: "#fff5f8",
-              color: "#ff5d8f",
-              fontWeight: "700",
-              fontSize: "13px",
-              cursor: "pointer",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#ff5d8f";
-              e.currentTarget.style.color = "#fff";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#fff5f8";
-              e.currentTarget.style.color = "#ff5d8f";
-            }}
-          >
-            Sign Out 🔒
-          </button>
-          <a
-            href="/"
-            style={{
-              color: "#888",
-              textDecoration: "none",
-              fontSize: "13px",
-              fontWeight: "600",
-              textAlign: "center",
-            }}
-          >
-            ← Back to Store
-          </a>
-        </div>
-      </aside>
+            <a
+              href="/"
+              style={{
+                color: "#888",
+                textDecoration: "none",
+                fontSize: "13px",
+                fontWeight: "600",
+                textAlign: "center",
+              }}
+            >
+              ← Back to Store
+            </a>
+          </div>
+        </aside>
+      )}
 
       {/* ── Main content ── */}
       <main
         style={{
           flex: 1,
-          padding: "32px 40px",
+          padding: isMobile ? "20px 16px" : "32px 40px",
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",

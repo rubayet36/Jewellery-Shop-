@@ -17,9 +17,9 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
   const grandTotal = totalPrice + deliveryCharge;
 
   const sendTelegramNotification = async (orderPayload) => {
-    // 🌸 Paste your free Telegram Bot credentials here
-    const BOT_TOKEN = "8903255568:AAHX0b2uxjtrRiHO7_A9q8-fBnjh2nBc3Ts"; // User's Telegram Bot Token
-    const CHAT_ID = "8646993462";   // User's Telegram Chat ID
+    // Load from Vite environment variables with fallback
+    const BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || "8903255568:AAHX0b2uxjtrRiHO7_A9q8-fBnjh2nBc3Ts"; // User's Telegram Bot Token
+    const CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID || "8646993462";   // User's Telegram Chat ID
 
     if (!BOT_TOKEN || !CHAT_ID) {
       console.log("🌸 Telegram Alert: Telegram Bot credentials are not configured inside CheckoutModal.jsx yet! Set BOT_TOKEN and CHAT_ID to receive instant push alerts on Telegram! 🧸💖");
@@ -76,8 +76,65 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate Bangladeshi phone number (exactly 11 digits, starting with 01)
+    const bdPhoneRegex = /^(01[3-9]\d{8})$/;
+    if (!bdPhoneRegex.test(form.phone.trim())) {
+      alert("Please enter a valid 11-digit Bangladeshi mobile number (e.g., 01XXXXXXXXX)! 🌸");
+      return;
+    }
+
     setLoading(true);
     try {
+      // Validate cart items existence and stock against database before placing order
+      const productIds = cartItems.map((item) => item.id);
+      const { data: dbProducts, error: fetchErr } = await supabase
+        .from("products")
+        .select("id, name, stock, is_preorder")
+        .in("id", productIds);
+
+      if (fetchErr) {
+        throw new Error("Failed to verify product availability: " + fetchErr.message);
+      }
+
+      const dbProductMap = {};
+      (dbProducts || []).forEach((p) => {
+        dbProductMap[p.id] = p;
+      });
+
+      const problems = [];
+      for (const item of cartItems) {
+        const dbProd = dbProductMap[item.id];
+        if (!dbProd) {
+          problems.push(`🌸 "${item.name}" has been removed from our collection.`);
+        } else if (!dbProd.is_preorder && dbProd.stock < item.qty) {
+          if (dbProd.stock === 0) {
+            problems.push(`🌸 "${item.name}" is now out of stock.`);
+          } else {
+            problems.push(`🌸 "${item.name}" only has ${dbProd.stock} units left in stock (you requested ${item.qty}).`);
+          }
+        }
+      }
+
+      if (problems.length > 0) {
+        // Adjust cart items in localStorage and refresh
+        const validItems = cartItems.filter((item) => {
+          const dbProd = dbProductMap[item.id];
+          if (!dbProd) return false; // remove deleted
+          if (!dbProd.is_preorder && dbProd.stock === 0) return false; // remove out of stock
+          if (!dbProd.is_preorder && dbProd.stock < item.qty) {
+            item.qty = dbProd.stock; // clamp to available stock
+          }
+          return true;
+        });
+
+        localStorage.setItem("jewel_cart", JSON.stringify(validItems));
+        alert("Cart Updated:\n\n" + problems.join("\n") + "\n\nWe have updated your cart to match the current stock. Please review and try again! 💕");
+        window.location.reload();
+        setLoading(false);
+        return;
+      }
+
       const orderPayload = {
         customer_name: form.name,
         customer_phone: form.phone,
@@ -102,15 +159,6 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
 
       // Trigger Telegram Alert
       await sendTelegramNotification(orderPayload);
-
-      // Decrement stock for each purchased product
-      await Promise.all(
-        cartItems.map(async (item) => {
-          const { data: prod } = await supabase.from("products").select("stock").eq("id", item.id).single();
-          const newStock = Math.max(0, (prod?.stock ?? 0) - item.qty);
-          await supabase.from("products").update({ stock: newStock }).eq("id", item.id);
-        })
-      );
 
       localStorage.removeItem("jewel_cart");
       clearCart();
@@ -247,7 +295,7 @@ export default function CheckoutModal({ onClose, isOutsideDhaka, setIsOutsideDha
                 </div>
               </div>
               {field("CUSTOMER NAME *", <input required type="text" placeholder="Your full name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputCss} />)}
-              {field("PHONE NUMBER *",  <input required type="tel"  placeholder="e.g. 01XXXXXXXXX"  value={form.phone}   onChange={e => setForm({ ...form, phone: e.target.value })}   style={inputCss} />)}
+              {field("PHONE NUMBER *",  <input required type="tel" maxLength={11} placeholder="e.g. 01XXXXXXXXX"  value={form.phone}   onChange={e => setForm({ ...form, phone: e.target.value.replace(/\D/g, "") })}   style={inputCss} />)}
               {field("DELIVERY ADDRESS *", <textarea required rows={3} placeholder="House, Road, Area, City" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} style={{ ...inputCss, resize: "vertical", fontFamily: "inherit" }} />)}
               {field(
                 "TRANSACTION ID *",

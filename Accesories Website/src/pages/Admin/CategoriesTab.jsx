@@ -8,6 +8,13 @@ export default function CategoriesTab() {
   const [name, setName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [msg, setMsg] = useState({ text: "", type: "" }); // { text: "", type: "success" | "error" }
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     fetchCategories();
@@ -123,7 +130,7 @@ export default function CategoriesTab() {
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "28px", alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 340px", gap: "28px", alignItems: "start" }}>
         
         {/* Category List */}
         <div style={{ background: "#fff", border: "1px solid #fce7f3", borderRadius: "24px", padding: "24px", boxShadow: "0 8px 24px rgba(255,93,143,0.03)" }}>

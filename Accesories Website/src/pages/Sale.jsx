@@ -10,8 +10,13 @@ const LIGHT_BEIGE = "#fffafd";
 
 export default function Sale() {
   const [products, setProducts]                 = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [loading, setLoading]                   = useState(false);
+  const [page, setPage]                         = useState(0);
+  const [hasMore, setHasMore]                   = useState(true);
+  const [totalCount, setTotalCount]             = useState(0);
+  const [categories, setCategories]             = useState([]);
   const [sortBy, setSortBy]                     = useState("default");
+  const [searchVal, setSearchVal]               = useState("");
   const [searchQuery, setSearchQuery]           = useState("");
   const [filters, setFilters]                   = useState({
     priceMin: "",
@@ -20,60 +25,137 @@ export default function Sale() {
     availability: "",
   });
 
-  useEffect(() => { fetchProducts(); }, []);
-  useEffect(() => { applyFilters(); }, [products, filters, sortBy, searchQuery]);
+  // Fetch categories list once on mount
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const { data } = await supabase.from("categories").select("name");
+        if (data) setCategories(data.map((c) => c.name));
+      } catch (err) {
+        console.error("Error loading categories:", err);
+      }
+    }
+    loadCategories();
+  }, []);
 
-  const fetchProducts = async () => {
-    // Select categories(name) to support joined category filtering
-    const { data, error } = await supabase.from("products").select("*, categories(name)");
-    if (error) {
-      console.error("Error fetching products:", error);
-    } else {
-      // Map category name to p.category, filter only sale items
-      const enriched = (data || [])
-        .filter(p => p.is_sale)
-        .map(p => ({
+  // Debounce search query input (300ms delay)
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      setSearchQuery(searchVal);
+    }, 300);
+    return () => clearTimeout(delayDebounce);
+  }, [searchVal]);
+
+  // Trigger reset and reload on filter/sort/search change
+  useEffect(() => {
+    setPage(0);
+    setProducts([]);
+    setHasMore(true);
+    fetchProducts(0, true);
+  }, [filters, sortBy, searchQuery]);
+
+  const fetchProducts = async (currentPage, isReset = false) => {
+    setLoading(true);
+    const ITEMS_PER_PAGE = 12;
+    const from = currentPage * ITEMS_PER_PAGE;
+    const to = from + ITEMS_PER_PAGE - 1;
+
+    try {
+      // Build dynamic query
+      let query;
+      if (filters.category) {
+        query = supabase
+          .from("products")
+          .select("*, categories!inner(name)", { count: "exact" })
+          .eq("categories.name", filters.category)
+          .eq("is_sale", true);
+      } else {
+        query = supabase
+          .from("products")
+          .select("*, categories(name)", { count: "exact" })
+          .eq("is_sale", true);
+      }
+
+      // Search Query filter
+      if (searchQuery.trim()) {
+        const q = `%${searchQuery.trim()}%`;
+        query = query.or(`name.ilike.${q},description.ilike.${q}`);
+      }
+
+      // Price range (checks sale_price if it exists, otherwise price)
+      if (filters.priceMin) {
+        query = query.gte("price", parseFloat(filters.priceMin));
+      }
+      if (filters.priceMax) {
+        query = query.lte("price", parseFloat(filters.priceMax));
+      }
+
+      // Availability filter
+      if (filters.availability === "in-stock") {
+        query = query.gt("stock", 0);
+      } else if (filters.availability === "out-of-stock") {
+        query = query.eq("stock", 0);
+      }
+
+      // Sort
+      if (sortBy === "price-asc") {
+        // Order by sale_price if available, fallback to price
+        query = query.order("price", { ascending: true });
+      } else if (sortBy === "price-desc") {
+        query = query.order("price", { ascending: false });
+      } else if (sortBy === "name-asc") {
+        query = query.order("name", { ascending: true });
+      } else {
+        query = query.order("id", { ascending: false });
+      }
+
+      // Range limits for pagination
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
+
+      if (error) {
+        console.error("Error fetching products:", error);
+      } else {
+        const enriched = (data || []).map((p) => ({
           ...p,
-          category: p.categories?.name
+          category: p.categories?.name,
         }));
-      setProducts(enriched);
+        setProducts((prev) => {
+          const next = isReset ? enriched : [...prev, ...enriched];
+          setHasMore(next.length < (count || 0));
+          return next;
+        });
+        setTotalCount(count || 0);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const applyFilters = () => {
-    let f = [...products];
-
-    // Search query filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      f = f.filter(
-        (p) =>
-          p.name?.toLowerCase().includes(q) ||
-          p.description?.toLowerCase().includes(q)
-      );
+  const loadMore = () => {
+    if (!loading && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchProducts(nextPage, false);
     }
-
-    if (filters.priceMin)        f = f.filter((p) => (p.sale_price || p.price) >= parseFloat(filters.priceMin));
-    if (filters.priceMax)        f = f.filter((p) => (p.sale_price || p.price) <= parseFloat(filters.priceMax));
-    if (filters.category)        f = f.filter((p) => p.category === filters.category);
-    if (filters.availability === "in-stock")    f = f.filter((p) => p.stock > 0);
-    if (filters.availability === "out-of-stock") f = f.filter((p) => p.stock === 0);
-    
-    if (sortBy === "price-asc")  f.sort((a, b) => (a.sale_price || a.price) - (b.sale_price || b.price));
-    if (sortBy === "price-desc") f.sort((a, b) => (b.sale_price || b.price) - (a.sale_price || a.price));
-    if (sortBy === "name-asc")   f.sort((a, b) => a.name?.localeCompare(b.name));
-    
-    setFilteredProducts(f);
   };
 
   const set = (key, val) => setFilters((prev) => ({ ...prev, [key]: val }));
   const clear = () => {
     setFilters({ priceMin: "", priceMax: "", category: "", availability: "" });
+    setSearchVal("");
     setSearchQuery("");
   };
 
-  const categories      = [...new Set(products.map((p) => p.category).filter(Boolean))];
-  const hasActiveFilter = filters.priceMin || filters.priceMax || filters.category || filters.availability || searchQuery;
+  const hasActiveFilter =
+    filters.priceMin ||
+    filters.priceMax ||
+    filters.category ||
+    filters.availability ||
+    searchQuery;
 
   const pill = (active) => ({
     padding: "7px 18px",
@@ -108,7 +190,7 @@ export default function Sale() {
             Special Offers
           </h1>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "14px", marginTop: "6px", marginBottom: "18px" }}>
-            {products.length} discounted pieces, limited time only
+            {totalCount} discounted pieces, limited time only
           </p>
 
           {/* Search bar integration */}
@@ -116,8 +198,8 @@ export default function Sale() {
             <input
               type="text"
               placeholder="Search discounted pieces..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
               style={{
                 width: "100%",
                 padding: "10px 18px",
@@ -136,9 +218,12 @@ export default function Sale() {
             <span style={{ position: "absolute", left: "14px", top: "10px", color: "rgba(255,255,255,0.7)", fontSize: "13px" }}>
               🔍
             </span>
-            {searchQuery && (
+            {searchVal && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => {
+                  setSearchVal("");
+                  setSearchQuery("");
+                }}
                 style={{
                   position: "absolute",
                   right: "14px",
@@ -220,7 +305,7 @@ export default function Sale() {
 
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "12px", color: "#888", fontWeight: "600" }}>
-              {filteredProducts.length} products
+              {totalCount} products
             </span>
             <select
               value={sortBy}
@@ -247,8 +332,40 @@ export default function Sale() {
       </div>
 
       {/* ── Products (full width) ─────────────────────── */}
-      {filteredProducts.length > 0 ? (
-        <Products products={filteredProducts} showSaleOnly={true} />
+      {products.length > 0 || loading ? (
+        <>
+          <Products products={products} showSaleOnly={true} loading={loading && products.length === 0} />
+          {hasMore && products.length > 0 && (
+            <div style={{ display: "flex", justifyContent: "center", padding: "40px 0 60px", background: "#fff5f8" }}>
+              <button
+                onClick={loadMore}
+                disabled={loading}
+                style={{
+                  background: RUST,
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "999px",
+                  padding: "12px 36px",
+                  fontSize: "14px",
+                  fontWeight: "700",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  boxShadow: "0 8px 24px rgba(236,72,153,0.25)",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 12px 30px rgba(236,72,153,0.35)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(236,72,153,0.25)";
+                }}
+              >
+                {loading ? "Loading more cute offers... 🌸" : "Load More ✨"}
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <div style={{ textAlign: "center", padding: "100px 20px" }}>
           <div style={{ fontSize: "52px", marginBottom: "16px" }}>🛍️</div>

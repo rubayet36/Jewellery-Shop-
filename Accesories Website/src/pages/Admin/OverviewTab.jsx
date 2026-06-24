@@ -22,16 +22,20 @@ export default function OverviewTab() {
     const { count: prodCount } = await supabase
       .from("products")
       .select("*", { count: "exact", head: true });
-    const { data: lowStockData } = await supabase
+    
+    const { count: lowStockCount } = await supabase
       .from("products")
-      .select("id")
+      .select("*", { count: "exact", head: true })
       .lte("stock", 5);
+
     let ordCount = 0,
       rev = 0;
     try {
-      const { data: orders } = await supabase.from("orders").select("total");
+      const { data: orders, count: orderCount } = await supabase
+        .from("orders")
+        .select("total", { count: "exact" });
       if (orders) {
-        ordCount = orders.length;
+        ordCount = orderCount || orders.length;
         rev = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
       }
     } catch (e) {
@@ -39,7 +43,7 @@ export default function OverviewTab() {
     }
     setStats({
       products: prodCount || 0,
-      lowStock: lowStockData?.length || 0,
+      lowStock: lowStockCount || 0,
       orders: ordCount,
       revenue: rev,
     });
@@ -107,10 +111,11 @@ export default function OverviewTab() {
     <div
       style={{
         background: "#fff",
-        padding: "24px",
+        padding: "20px",
         borderRadius: "16px",
         border: "1px solid #eaeaea",
         flex: 1,
+        minWidth: "140px",
         boxShadow: "0 2px 10px rgba(0,0,0,0.02)",
       }}
     >
@@ -126,7 +131,7 @@ export default function OverviewTab() {
       >
         {title}
       </p>
-      <p style={{ margin: 0, fontSize: "32px", fontWeight: "800", color }}>
+      <p style={{ margin: 0, fontSize: "28px", fontWeight: "800", color }}>
         {value}
       </p>
     </div>
@@ -144,7 +149,7 @@ export default function OverviewTab() {
       >
         Dashboard Overview
       </h1>
-      <div style={{ display: "flex", gap: "20px", marginBottom: "32px" }}>
+      <div style={{ display: "flex", gap: "16px", marginBottom: "32px", flexWrap: "wrap" }}>
         <Card title="Total Products" value={stats.products} color={BROWN} />
         <Card
           title="Low Stock Alerts"

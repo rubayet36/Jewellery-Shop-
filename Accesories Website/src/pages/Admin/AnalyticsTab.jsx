@@ -103,7 +103,7 @@ export default function AnalyticsTab() {
     setLoading(true);
     try {
       const [{ data: ord }, { data: prod }] = await Promise.all([
-        supabase.from("orders").select("*").order("created_at", { ascending: true }),
+        supabase.from("orders").select("total, created_at, items").order("created_at", { ascending: true }),
         supabase.from("products").select("id, buying_price, price"),
       ]);
       // Attach profit to each order using product buying_price
@@ -263,7 +263,7 @@ export default function AnalyticsTab() {
           {/* Profit breakdown table */}
           <div style={{ background: "#fff", borderRadius: "16px", border: "1px solid #eaeaea", padding: "24px" }}>
             <h2 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: "700", color: BROWN }}>💵 Cash Earned Summary</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px" }}>
               {[
                 { label: "This Week's Revenue",  val: (() => { const r = getWeekRange();  return orders.filter(o => new Date(o.created_at) >= r.from && new Date(o.created_at) <= r.to).reduce((s,o)=>s+Number(o.total||0),0); })() },
                 { label: "This Month's Revenue", val: (() => { const r = getMonthRange(); return orders.filter(o => new Date(o.created_at) >= r.from && new Date(o.created_at) <= r.to).reduce((s,o)=>s+Number(o.total||0),0); })() },

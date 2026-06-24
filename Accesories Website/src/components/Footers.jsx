@@ -1,4 +1,4 @@
-import { FaFacebookF, FaInstagram, FaTwitter } from "react-icons/fa";
+import { FaFacebookF, FaInstagram, FaTiktok } from "react-icons/fa";
 
 function Footers() {
   return (
@@ -8,10 +8,9 @@ function Footers() {
           <div>
             <p className="text-lg font-semibold">Accessories Store</p>
             <p className="text-sm text-white/80 mt-2">
-              Cute jewelry and soft-glam accessories with fast delivery.
+              Elegant collections curated with love.
             </p>
           </div>
-
           <div className="flex items-center gap-4">
             <a
               href="https://www.facebook.com/profile.php?id=100069402272361"
@@ -30,23 +29,27 @@ function Footers() {
               <FaInstagram className="text-white" />
             </a>
             <a
-              href="https://www.x.com"
+              href="https://www.tiktok.com/@fame.flare63"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/18 hover:bg-white/28 transition-colors"
             >
-              <FaTwitter className="text-white" />
+              <FaTiktok className="text-white" />
             </a>
           </div>
         </div>
         <div className="mt-8 border-t border-white/20 pt-6 text-sm text-white/70 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p>© {new Date().getFullYear()} Accessories Store. All rights reserved.</p>
-          <a
-            href="/admin"
-            className="hover:underline opacity-65 hover:opacity-100 transition-opacity text-xs tracking-wider uppercase font-semibold flex items-center gap-1.5"
-          >
-            <span>🛡️</span> Admin Dashboard
-          </a>
+          <p>
+            © {new Date().getFullYear()} Accessories Store. All rights reserved to{" "}
+            <a
+              href="https://rubayetkhan.com"
+              target="_blank"
+              rel="noreferrer"
+              className="underline hover:text-white transition-colors"
+            >
+              Rubayet Khan
+            </a>.
+          </p>
         </div>
       </div>
     </footer>

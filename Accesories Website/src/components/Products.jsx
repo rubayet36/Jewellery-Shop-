@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../utils/supabase";
 import { FiHeart } from "react-icons/fi";
-import ProductModal from "./ProductModal";
 
 const BROWN = "#831843";
 const RUST = "#db2777";
@@ -11,14 +11,22 @@ function Products({
   products: propProducts,
   showSaleOnly = false,
   categoryFilter = "",
+  loading: propLoading,
+  limit,
 }) {
+  const navigate = useNavigate();
   const [products, setProducts] = useState(propProducts || []);
-  const [loading, setLoading] = useState(!propProducts);
-  const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(propLoading !== undefined ? propLoading : !propProducts);
   const [wishlist, setWishlist] = useState(() =>
     JSON.parse(localStorage.getItem("jewel_wishlist") || "[]"),
   );
   const [categoriesList, setCategoriesList] = useState([]);
+
+  useEffect(() => {
+    if (propLoading !== undefined) {
+      setLoading(propLoading);
+    }
+  }, [propLoading]);
 
   useEffect(() => {
     async function loadCategories() {
@@ -36,7 +44,9 @@ function Products({
   useEffect(() => {
     if (propProducts) {
       setProducts(propProducts);
-      setLoading(false);
+      if (propLoading === undefined) {
+        setLoading(false);
+      }
       return;
     }
     fetchProducts();
@@ -49,17 +59,48 @@ function Products({
       )
       .subscribe();
     return () => sub.unsubscribe();
-  }, [propProducts]);
+  }, [propProducts, limit, categoryFilter, showSaleOnly]);
 
   const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, categories(name)");
-    if (!error)
-      setProducts(
-        showSaleOnly ? (data || []).filter((p) => p.is_sale) : data || [],
-      );
-    setLoading(false);
+    setLoading(true);
+    try {
+      let query;
+      if (categoryFilter) {
+        query = supabase
+          .from("products")
+          .select("*, categories!inner(name)");
+      } else {
+        query = supabase
+          .from("products")
+          .select("*, categories(name)");
+      }
+
+      if (categoryFilter) {
+        query = query.eq("categories.name", categoryFilter);
+      }
+
+      if (showSaleOnly) {
+        query = query.eq("is_sale", true);
+      }
+
+      // Always show latest upload first
+      query = query.order("id", { ascending: false });
+
+      if (limit) {
+        query = query.limit(limit);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.error("Error fetching products:", error);
+      } else if (data) {
+        setProducts(data);
+      }
+    } catch (err) {
+      console.error("Fetch products error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleWishlist = (e, id) => {
@@ -71,17 +112,111 @@ function Products({
     localStorage.setItem("jewel_wishlist", JSON.stringify(updated));
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div
-        style={{ display: "flex", justifyContent: "center", padding: "80px 0" }}
+        style={{
+          width: "100%",
+          background: "#fff5f8",
+          padding: "48px 0",
+          borderRadius: "0 0 32px 32px",
+        }}
       >
         <div
-          className="animate-spin rounded-full h-12 w-12 border-b-2"
-          style={{ borderColor: RUST }}
-        />
+          style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 40px" }}
+        >
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full"
+          >
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  background: "#fff",
+                  borderRadius: "24px",
+                  border: `3px solid ${BEIGE}`,
+                  overflow: "hidden",
+                  padding: "18px",
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "380px",
+                  boxSizing: "border-box",
+                }}
+              >
+                <div
+                  className="animate-pulse"
+                  style={{
+                    height: "170px",
+                    background: "#ffeef2",
+                    borderRadius: "16px",
+                    marginBottom: "12px",
+                  }}
+                />
+                <div
+                  className="animate-pulse"
+                  style={{
+                    height: "10px",
+                    width: "40%",
+                    background: "#ffeef2",
+                    borderRadius: "4px",
+                    marginBottom: "8px",
+                  }}
+                />
+                <div
+                  className="animate-pulse"
+                  style={{
+                    height: "16px",
+                    width: "75%",
+                    background: "#ffeef2",
+                    borderRadius: "4px",
+                    marginBottom: "12px",
+                  }}
+                />
+                <div
+                  className="animate-pulse"
+                  style={{
+                    height: "32px",
+                    width: "100%",
+                    background: "#ffeef2",
+                    borderRadius: "4px",
+                    marginBottom: "auto",
+                  }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingTop: "12px",
+                    borderTop: `1.5px solid ${BEIGE}`,
+                  }}
+                >
+                  <div
+                    className="animate-pulse"
+                    style={{
+                      height: "20px",
+                      width: "60px",
+                      background: "#ffeef2",
+                      borderRadius: "4px",
+                    }}
+                  />
+                  <div
+                    className="animate-pulse"
+                    style={{
+                      height: "32px",
+                      width: "90px",
+                      background: "#ffeef2",
+                      borderRadius: "16px",
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
+  }
 
   const list = (() => {
     let base = showSaleOnly ? products.filter((p) => p.is_sale) : products;
@@ -148,11 +283,7 @@ function Products({
             </p>
           ) : (
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-                gap: "24px",
-              }}
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full"
             >
               {list.map((product) => {
                 const isWished = wishlist.includes(product.id);
@@ -163,7 +294,7 @@ function Products({
                 return (
                   <div
                     key={product.id}
-                    onClick={() => setSelected(product)}
+                    onClick={() => navigate(`/product/${product.id}`)}
                     className="bouncy-hover"
                     style={{
                       background: "#fff",
@@ -189,7 +320,26 @@ function Products({
                       e.currentTarget.style.borderColor = BEIGE;
                     }}
                   >
-                    {product.is_sale && (
+                    {product.is_preorder && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "12px",
+                          left: "12px",
+                          background: "#e67e22",
+                          color: "#fff",
+                          padding: "4px 12px",
+                          borderRadius: "999px",
+                          fontSize: "10px",
+                          fontWeight: "800",
+                          letterSpacing: "1px",
+                          zIndex: 2,
+                        }}
+                      >
+                        PREORDER 📦
+                      </div>
+                    )}
+                    {product.is_sale && !product.is_preorder && (
                       <div
                         style={{
                           position: "absolute",
@@ -209,8 +359,7 @@ function Products({
                       </div>
                     )}
 
-                    {/* Out of Stock overlay */}
-                    {product.stock === 0 && (
+                    {product.stock === 0 && !product.is_preorder && (
                       <div
                         style={{
                           position: "absolute",
@@ -279,6 +428,7 @@ function Products({
                         <img
                           src={product.image_url}
                           alt={product.name}
+                          loading="lazy"
                           style={{
                             width: "100%",
                             height: "100%",
@@ -392,13 +542,13 @@ function Products({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (product.stock !== 0) setSelected(product);
+                            navigate(`/product/${product.id}`);
                           }}
-                          disabled={product.stock === 0}
+                          disabled={product.stock === 0 && !product.is_preorder}
                           className="cute-bubble-btn"
                           style={{
                             background:
-                              product.stock === 0
+                              product.stock === 0 && !product.is_preorder
                                 ? "#ccc"
                                 : RUST,
                             color: "#fff",
@@ -408,11 +558,11 @@ function Products({
                             fontSize: "12px",
                             fontWeight: "700",
                             cursor:
-                              product.stock === 0 ? "not-allowed" : "pointer",
-                            boxShadow: product.stock === 0 ? "none" : "0 6px 14px rgba(255,93,143,0.18)",
+                              product.stock === 0 && !product.is_preorder ? "not-allowed" : "pointer",
+                            boxShadow: product.stock === 0 && !product.is_preorder ? "none" : "0 6px 14px rgba(255,93,143,0.18)",
                           }}
                         >
-                          {product.stock === 0 ? "Sold Out" : "View Details ✨"}
+                          {product.stock === 0 && !product.is_preorder ? "Sold Out" : product.is_preorder ? "Preorder ✨" : "View Details ✨"}
                         </button>
                       </div>
                     </div>
@@ -423,11 +573,6 @@ function Products({
           )}
         </div>
       </div>
-
-      {/* Product Modal */}
-      {selected && (
-        <ProductModal product={selected} onClose={() => setSelected(null)} />
-      )}
     </>
   );
 }
